@@ -37,10 +37,10 @@
 > ask' = IR2 $ (\(HCons x HNil) -> x)
 
 > foo' :: IReader2 (HCons a (HCons [a] HNil)) [a]
-> foo' = ask' >:>= (\x -> ask' >:>= (\xs -> ireturn (x : xs)))
+> foo' = ask' >>=: (\x -> ask' >>=: (\xs -> ireturn (x : xs)))
 > foo'_eval = iread2 foo' (HCons 'a' (HCons "bc" HNil))
 
-> foo2' = ask' >:>= (\x -> ask' >:>= (\y -> ask' >:>= (\z -> ireturn (x, y, z))))
+> foo2' = ask' >>=: (\x -> ask' >>=: (\y -> ask' >>=: (\z -> ireturn (x, y, z))))
 > foo2'a = ibind (\x -> ibind (\y -> ibind (\z -> ireturn (x, y, z)) ask') ask') ask'
 > foo2'a' = ibind (\(x, y) -> ibind (\z -> ireturn (x, y, z)) ask') $ 
 >                ibind (\x -> ibind (\y -> ireturn (x, y)) ask') ask'

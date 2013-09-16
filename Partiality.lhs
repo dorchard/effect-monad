@@ -65,4 +65,4 @@ indexed partiality
 
 > headE x = ifM (x == []) (Fail) (Ok (head x))
 
-> fooa x y = headE x >:>= (\x' -> headE y >:>= (\y' -> ireturn [x', y']))
+> fooa x y = headE x >>=: (\x' -> headE y >>=: (\y' -> ireturn [x', y']))

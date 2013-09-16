@@ -24,11 +24,11 @@
 
 Examples
 
-> foo = ask >:>= (\x -> ask >:>= (\xs -> ireturn (x : xs)))
+> foo = ask >>=: (\x -> ask >>=: (\xs -> ireturn (x : xs)))
 > foo_eval = iread foo ('a', ("bc", ()))
 
-> foo2 = ask >:>= (\x -> ifM x (ask >:>= (\y -> ireturn $ y + 1))
->                              (ask >:>= (\y -> ireturn $ ord y)))
+> foo2 = ask >>=: (\x -> ifM x (ask >>=: (\y -> ireturn $ y + 1))
+>                              (ask >>=: (\y -> ireturn $ ord y)))
 
 > foo2_eval1 = iread foo2 (True, ((42, ()), ('a', ())))
 > foo2_eval2 = iread foo2 (False, ((42, ()), ('a', ())))
