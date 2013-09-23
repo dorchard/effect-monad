@@ -26,9 +26,11 @@
 >                          in (HCons x xs', ys')
 
 > instance IxMonad IReader2 where
+>     type Inv IReader2 s t = AppendA s t
+
 >     type Unit IReader2 = HNil
 >     type Plus IReader2 s t = Append s t
->     type Inv IReader2 s t = AppendA s t
+
 >     ireturn x = IR2 $ \HNil -> x
 >     ibind k (IR2 f) = IR2 $ \xs -> let (s, t) = split xs
 >                                    in iread2 (k (f s)) t
@@ -41,9 +43,11 @@
 > foo'_eval = iread2 foo' (HCons 'a' (HCons "bc" HNil))
 
 > foo2' = ask' >:>= (\x -> ask' >:>= (\y -> ask' >:>= (\z -> ireturn (x, y, z))))
-> foo2'a = ibind (\x -> ibind (\y -> ibind (\z -> ireturn (x, y, z)) ask') ask') ask'
-> foo2'a' = ibind (\(x, y) -> ibind (\z -> ireturn (x, y, z)) ask') $ 
+
+> foo2A, foo2B :: IReader2 (HCons a (HCons b (HCons c HNil))) (a, b, c)
+> foo2A = ibind (\x -> ibind (\y -> ibind (\z -> ireturn (x, y, z)) ask') ask') ask'
+> foo2B = ibind (\(x, y) -> ibind (\z -> ireturn (x, y, z)) ask') $ 
 >                ibind (\x -> ibind (\y -> ireturn (x, y)) ask') ask'
 
-> foo2'a_eval = iread2 foo2'a (HCons 1 (HCons 'a' (HCons True HNil)))
-> foo2'a'_eval = iread2 foo2'a' (HCons 1 (HCons 'a' (HCons True HNil)))
+> foo2Aeval = iread2 foo2A (HCons 1 (HCons 'a' (HCons True HNil)))
+> foo2Beval = iread2 foo2B (HCons 1 (HCons 'a' (HCons True HNil)))
