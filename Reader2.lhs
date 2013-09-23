@@ -25,6 +25,8 @@
 >     split (HCons x xs) = let (xs', ys') = split xs
 >                          in (HCons x xs', ys')
 
+
+
 > instance IxMonad IReader2 where
 >     type Inv IReader2 s t = AppendA s t
 
