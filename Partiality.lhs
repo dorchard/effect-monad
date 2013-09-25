@@ -7,7 +7,6 @@
 
 > data F 
 > data T 
-
 > data U
 
 indexed partiality
@@ -15,12 +14,12 @@ indexed partiality
 > data IExcp p a where
 >     Fail :: IExcp F a
 >     Ok :: a -> IExcp T a
->     U :: IExcp s a -> IExcp U a
+>     U :: IExcp s a -> IExcp U a -- dynamic partiality
 
-> showas :: Show a => IExcp p a -> String
-> showas Fail = "Fail"
-> showas (U a) = showas a
-> showas (Ok a) = show a
+> instance Show a => Show (IExcp p a) where
+>     show Fail = "Fail"
+>     show (U a) = show a
+>     show (Ok a) = show a
 
 > instance IxMonad IExcp where
 >   type Unit IExcp = T
@@ -65,4 +64,4 @@ indexed partiality
 
 > headE x = ifM (x == []) (Fail) (Ok (head x))
 
-> fooa x y = headE x >:>= (\x' -> headE y >:>= (\y' -> ireturn [x', y']))
+> fooa x y = headE x >>=: (\x' -> headE y >>=: (\y' -> ireturn [x', y']))
