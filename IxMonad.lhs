@@ -1,3 +1,7 @@
+'Indexed monads' 
+
+Dual to 'indexed comonads' 
+
 %if False
 
 > {-# LANGUAGE TypeFamilies #-}

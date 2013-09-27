@@ -29,12 +29,12 @@ Examples
 
 
 > -- foo :: IReader2 (HCons a (HCons [a] HNil)) [a]
-> foo = ask >:>= (\x -> ask >:>= (\xs -> ireturn (x : xs)))
+> foo = ask >>=: (\x -> ask >>=: (\xs -> ireturn (x : xs)))
 > fooeval = iread2 foo (HCons 'a' (HCons "bc" HNil))
 
 > -- foo2A, foo2B :: IReader2 (HCons a (HCons b (HCons c HNil))) (a, b, c)
-> foo2A = ask >:>= (\x -> ask >:>= (\y -> ask >:>= (\z -> ireturn (x, y, z))))
-> foo2B = (ask >:>= (\x -> ask >:>= (\y -> ireturn (x, y)))) >:>= (\(x, y) -> ask >:>= (\z -> ireturn (x, y, z)))
+> foo2A = ask >>=: (\x -> ask >>=: (\y -> ask >>=: (\z -> ireturn (x, y, z))))
+> foo2B = (ask >>=: (\x -> ask >>=: (\y -> ireturn (x, y)))) >>=: (\(x, y) -> ask >>=: (\z -> ireturn (x, y, z)))
 
 > foo2Aeval = iread2 foo2A (HCons 1 (HCons 'a' (HCons True HNil)))
 > foo2Beval = iread2 foo2B (HCons 1 (HCons 'a' (HCons True HNil)))
