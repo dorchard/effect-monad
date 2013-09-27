@@ -15,12 +15,12 @@ http://www.cl.cam.ac.uk/~dao29/publ/coeffects-icalp13.pdf
 
 %endif
 
-> class IxComonad (m :: * -> * -> *) where
->     type Inv m s t :: Constraint -- invariants (i.e. restrict to a subcategory of Hask)
->     type Inv m s t = ()
+> class IxComonad (c :: * -> * -> *) where
+>     type Inv c s t :: Constraint -- invariants (i.e. restrict to a subcategory of Hask)
+>     type Inv c s t = ()
 
->     type Unit m 
->     type Plus m s t
+>     type Unit c 
+>     type Plus c s t
 >
->     iextract :: c (Unit m) a -> a
->     iextend :: Inv m s t => (c t a -> b) -> c (Plus c s t) a -> c t b
+>     iextract :: c (Unit c) a -> a
+>     iextend :: Inv c s t => (c t a -> b) -> c (Plus c s t) a -> c t b
