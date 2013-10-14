@@ -15,6 +15,9 @@
 >     type Unit IReader2 = HNil
 >     type Plus IReader2 s t = Append s t
 
+
+k :: (a -> (r -> b)) -> (s -> b) -> (r ++ s -> b)
+
 >     ireturn x = IR2 $ \HNil -> x
 >     ibind k (IR2 f) = IR2 $ \xs -> let (s, t) = split xs
 >                                    in iread2 (k (f s)) t
