@@ -20,4 +20,3 @@ foo = do x <- ask
          return (x : xs)
 
 foo_eval = foo ('a', ("bc", ()))
-
