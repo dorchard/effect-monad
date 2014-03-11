@@ -6,6 +6,8 @@ import GHC.Prim
 
 class Cond m where
     type AltInv m s t :: Constraint
+    type AltInv m s t = ()
+
     type Alt m s t 
     ifM :: AltInv m s t => Bool -> m s a -> m t a -> m (Alt m s t) a
 
