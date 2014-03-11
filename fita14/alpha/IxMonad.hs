@@ -3,7 +3,6 @@
 module IxMonad where 
 
 import Prelude hiding ((>>=), return)
-import GHC.Prim
 
 class IxMonad (m :: * -> * -> *) where
 
@@ -13,6 +12,7 @@ class IxMonad (m :: * -> * -> *) where
    return :: a -> m (Unit m) a
    (>>=) :: m s a -> (a -> m t b) -> m (Plus m s t) b
 
+x >> y = x >>= (\_ -> y)
 fail = undefined
 
 

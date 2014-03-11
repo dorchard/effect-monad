@@ -3,6 +3,7 @@
 import IxMonad
 import Data.HList hiding (Monad(..))
 import Prelude hiding (Monad(..))
+import Cond
 
 instance IxMonad (->) where
     type Inv (->) s t = Split s t
@@ -18,6 +19,17 @@ instance IxMonad (->) where
  
 ask :: (HCons a HNil) -> a
 ask = \(HCons x HNil) -> x
+
+instance Cond (->) where
+    type AltInv (->) s t = Split s t
+    type Alt (->) s t = Append s t
+
+    ifM True x y = \rs -> let (r, s) = split rs
+                              _      = y s 
+                          in x r
+    ifM False x y = \rs -> let (r, s) = split rs
+                               _      = x r 
+                           in y s
 
 foo = do x <- ask
          xs <- ask
@@ -36,7 +48,13 @@ foo2' = do x <- ask
                      return (y:xs)
            return (x : xs')
 
+
 foo2_eval foo2 = foo2 (HCons 'a' (HCons 'b' (HCons "c" HNil)))
+
+foo3 = do x <- ask
+          ifM x ask (return 0)
+
+foo3_eval = foo3 (HCons False (HCons 42 HNil))
 
 -- Type-level append, and dual operations for split
 
