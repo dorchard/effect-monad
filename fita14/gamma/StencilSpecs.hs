@@ -2,20 +2,25 @@
 
 import Prelude hiding (Monad(..))
 
-import IxMonad
+import Control.IxMonad
 import ArrayReader
 
--- fooSym :: (Num a) => StencilM a (Symmetrical (S Z)) a a
-fooSym = do a <- ix (Pos Z)
-            b <- ix (Pos (S Z))
-            c <- ix (Neg (S Z))
-            return $ a + b + c 
+-- fooSym :: (Num a) => StencilM (Symmetrical (S Z)) a a
+localMean = do a <- ix (Pos Z)
+               b <- ix (Pos (S Z))
+               c <- ix (Neg (S Z))
+               return $ (a + b + c) / 3.0
 
-fooFwd :: Num a => StencilM a (Forward (S (S Z))) a a
-fooFwd = StencilM $ do a <- ix (Pos Z)
-                       b <- ix (Pos (S Z))
-                       c <- ix (Pos (S (S Z)))
-                       return $ a + b + c
+fooFwd' :: Num a => Stencil (Forward (S Z)) a a
+fooFwd' = Stencil $ do a <- ix (Pos Z)
+                       b <- ix (Pos (S (S Z)))
+                       return $ a + b 
+
+fooFwd :: Num a => Stencil (Forward (S (S Z))) a a
+fooFwd = Stencil $ do a <- ix (Pos Z)
+                      b <- ix (Pos (S Z))
+                      c <- ix (Pos (S (S Z)))
+                      return $ a + b + c
 
  {-
 --  The following causes a type error as it violates the specification
@@ -30,8 +35,8 @@ fooSymBroken = StencilM $ do a <- ix (Pos Z)
 -- fooFwd has a 'forward' pattern to depth of 2
 
 
-data StencilM a r x y where
-    StencilM :: (ArrayReader a spec y) -> StencilM a (Sort spec) x y
+data Stencil r x y where
+    Stencil :: (ArrayReader x spec y) -> Stencil (Sort spec) x y
 
 -- Specification definitions
 

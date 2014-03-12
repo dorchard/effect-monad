@@ -5,7 +5,7 @@ module ArrayReader where
 
 import Data.Array
 import Prelude hiding (Monad(..)) 
-import IxMonad
+import Control.IxMonad
 
 -- Array with a cursor
 data CArray x a = MkA (Array Int a, Int) 
