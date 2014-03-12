@@ -2,7 +2,7 @@
 
 module IxMonad where 
 
-import Prelude hiding ((>>=), return)
+import Prelude hiding (Monad(..),(>>))
 
 class IxMonad (m :: * -> * -> *) where
 

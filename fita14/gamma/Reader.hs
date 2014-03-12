@@ -1,9 +1,15 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax, NoMonomorphismRestriction #-}
 
 import IxMonad
 import Data.HList hiding (Monad(..))
 import Prelude hiding (Monad(..))
 import Cond
+
+foo = do x <- ask
+         y <- ask
+         return ("Name " ++ x ++ ", age " ++ (show y))
+
+--foo_eval = foo (HCons 'a' (HCons "bc" HNil))
 
 instance IxMonad (->) where
     type Inv (->) s t = Split s t
@@ -31,12 +37,6 @@ instance Cond (->) where
                                _      = x r 
                            in y s
 
-foo = do x <- ask
-         xs <- ask
-         return (x : xs)
-
-foo_eval = foo (HCons 'a' (HCons "bc" HNil))
-
 foo2 = do x <- ask
           y <- ask
           xs <- ask
@@ -51,10 +51,7 @@ foo2' = do x <- ask
 
 foo2_eval foo2 = foo2 (HCons 'a' (HCons 'b' (HCons "c" HNil)))
 
-foo3 = do x <- ask
-          ifM x ask (return 0)
 
-foo3_eval = foo3 (HCons False (HCons 42 HNil))
 
 -- Type-level append, and dual operations for split
 

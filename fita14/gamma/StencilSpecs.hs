@@ -5,21 +5,19 @@ import Prelude hiding (Monad(..))
 import IxMonad
 import ArrayReader
 
---fooSym :: (Num a) => StencilM a (Symmetrical (S Z)) a a
-
+-- fooSym :: (Num a) => StencilM a (Symmetrical (S Z)) a a
 fooSym = do a <- ix (Pos Z)
             b <- ix (Pos (S Z))
             c <- ix (Neg (S Z))
             return $ a + b + c 
 
--- fooFwd :: Num a => StencilM a (Forward (S (S Z))) a a
+fooFwd :: Num a => StencilM a (Forward (S (S Z))) a a
+fooFwd = StencilM $ do a <- ix (Pos Z)
+                       b <- ix (Pos (S Z))
+                       c <- ix (Pos (S (S Z)))
+                       return $ a + b + c
 
-fooFwd = do a <- ix (Pos Z)
-            b <- ix (Pos (S Z))
-            c <- ix (Pos (S (S Z)))
-            return $ a + b + c
-
-{- 
+ {-
 --  The following causes a type error as it violates the specification
 --  of symmetry
 
@@ -28,7 +26,6 @@ fooSymBroken = StencilM $ do a <- ix (Pos Z)
                              b <- ix (Pos (S Z))
                              return $ a + b 
 -}
-
 
 -- fooFwd has a 'forward' pattern to depth of 2
 

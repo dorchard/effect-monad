@@ -2,7 +2,7 @@
 
 module IxMonad where 
 
-import Prelude hiding ((>>=), return)
+import Prelude hiding (Monad(..))
 import GHC.Prim
 
 class IxMonad (m :: * -> * -> *) where

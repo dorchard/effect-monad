@@ -3,6 +3,7 @@
 module Control.IxMonad.Reader (HNil(..), HCons(..), ask, Split(..)) where
 
 import Control.IxMonad
+import Control.IxMonad.Cond
 import Data.HList hiding (Monad(..))
 import Prelude    hiding (Monad(..))
 
@@ -33,3 +34,16 @@ instance Split xs ys => Split (HCons x xs) ys where
     type Append (HCons x xs) ys = HCons x (Append xs ys)
     split (HCons x xs) = let (xs', ys') = split xs
                          in (HCons x xs', ys')
+
+-- Conditionals
+
+instance Cond (->) where
+    type AltInv (->) s t = Split s t
+    type Alt (->) s t = Append s t
+
+    ifM True x y = \rs -> let (r, s) = split rs
+                              _      = y s 
+                          in x r
+    ifM False x y = \rs -> let (r, s) = split rs
+                               _      = x r 
+                           in y s

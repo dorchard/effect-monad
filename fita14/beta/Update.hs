@@ -5,25 +5,26 @@ import Data.HList hiding (Monad(..), append)
 import Prelude hiding (Monad(..))
 
 data Put a = Put a deriving Show
+data NoPut = NoPut deriving Show
 
-instance IxMonad (,) where
-    type Unit (,) = ()
+-- Uupdate monad
+instance IxMonad (,) where -- i.e., m p a = (p, a)
+    type Unit (,) = NoPut
+    return x = (NoPut, x)
 
-    type Plus (,) s () = s
+    type Inv (,) s t = UpdateBind s t
+
+    type Plus (,) s NoPut = s
     type Plus (,) s (Put t) = Put t
-
-    type Inv (,) s t = WOBind s t
-
-    return x = ((), x)
     x >>= k = bind x k 
 
-class WOBind s t where
+class UpdateBind s t where
     bind :: (s, a) -> (a -> (t, b)) -> (Plus (,) s t, b)
 
-instance WOBind s () where
-    bind (s, a) k = let ((), b) = k a in (s, b)
+instance UpdateBind s NoPut where
+    bind (s, a) k = let (NoPut, b) = k a in (s, b)
 
-instance WOBind s (Put t) where
+instance UpdateBind s (Put t) where
     bind (s, a) k = k a
 
 put :: a -> (Put a, ())

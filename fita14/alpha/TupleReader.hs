@@ -5,12 +5,17 @@ import IxMonad
 
 import Data.Char
 
-instance IxMonad (->) where
-    type Unit (->) = ()
-    type Plus (->) s t = (s, t)
-
+instance IxMonad (->) where  -- M r a = r -> a
+    -- return :: a -> m (Unit m) a
+    -- return :: a -> (() -> a)
     return x  = \() -> x
-    f >>= k   = \(s, t) -> (k (f s)) t
+
+    type Unit (->) = ()
+
+    type Plus (->) s t = (s, t)
+    -- (>>=) :: m s a -> (a -> m t b) -> m (Plus m s t) b
+    -- (>>=) :: (s -> a) -> (a -> (t -> b)) -> ((s, t) -> b)
+    e >>= k   = \(s, t) -> (k (e s)) t
 
 ask :: p -> p
 ask = id

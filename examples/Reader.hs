@@ -2,6 +2,7 @@
 
 import Prelude hiding (Monad(..))
 import Control.IxMonad
+import Control.IxMonad.Cond
 import Control.IxMonad.Reader
 
 foo = do x <- ask
@@ -22,3 +23,8 @@ foo2' = do x <- ask
            return (x : xs')
 
 foo2_eval foo2 = foo2 (HCons 'a' (HCons 'b' (HCons "c" HNil)))
+
+foo3 = do x <- ask
+          ifM x ask (return 0)
+
+foo3_eval = foo3 (HCons False (HCons 42 HNil))

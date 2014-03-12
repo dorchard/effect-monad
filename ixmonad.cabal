@@ -18,9 +18,11 @@ library
   hs-source-dirs:       src
 
   exposed-modules:      Control.IxMonad
+                        Control.IxMonad.Cond
+                        Control.IxMonad.Maybe
                         Control.IxMonad.Reader
-                        Control.IxMonad.Update
                         Control.IxMonad.ReadOnlyWriter
+                        Control.IxMonad.Update
                         
   build-depends:        base < 5,
                         ghc-prim, 

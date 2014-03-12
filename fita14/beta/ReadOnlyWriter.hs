@@ -1,6 +1,8 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
 
-import IxMonad
+module Control.IxMonad.ReadOnlyWriter (HNil(..), HCons(..), ask, Split(..)) where
+
+import Control.IxMonad
 import Data.HList hiding (Monad(..), append)
 import Prelude hiding (Monad(..))
 
@@ -11,15 +13,10 @@ instance IxMonad (,) where
     type Plus (,) s t = Append s t
 
     return x = (HNil, x)
-    (r, a) >>= k = let (s, b) = k a
-                   in (r `append` s, b)
+    (r, a) >>= k = let (s, b) = k a in (r `append` s, b)
  
 put :: a -> (HCons a HNil, ())
 put x = (HCons x HNil, ())
-
-foo = do put 42
-         put "hello"
-         return ()
 
 -- Type-level append
 

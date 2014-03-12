@@ -19,10 +19,11 @@ ix n = ArrayReader (\(MkA (a, cursor)) -> a ! (cursor + toValue n))
 
 instance IxMonad (ArrayReader a) where
     type Plus (ArrayReader a) s t = Append s t -- append specs
-    type Unit (ArrayReader a) = HNil           -- empty spec
+    type Unit (ArrayReader a)     = HNil       -- empty spec
 
-    (ArrayReader f) >>= k = ArrayReader (\(MkA a) -> let (ArrayReader f') = k (f (MkA a))
-                                                      in f' (MkA a))
+    (ArrayReader f) >>= k = 
+        ArrayReader (\(MkA a) -> let (ArrayReader f') = k (f (MkA a))
+                                 in f' (MkA a))
     return a = ArrayReader (\_ -> a)
 
 

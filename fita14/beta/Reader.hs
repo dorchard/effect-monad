@@ -1,8 +1,10 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 
-import IxMonad
+module Control.IxMonad.Reader
+
+import Control.IxMonad
 import Data.HList hiding (Monad(..))
-import Prelude hiding (Monad(..))
+import Prelude    hiding (Monad(..))
 
 instance IxMonad (->) where
     type Inv (->) s t = Split s t
@@ -11,32 +13,11 @@ instance IxMonad (->) where
     type Plus (->) s t = Append s t
 
     return x = \HNil -> x
-    f >>= k = \xs -> let (s, t) = split xs
-                     in (k (f s)) t
+    e >>= k = \xs -> let (s, t) = split xs
+                     in (k (e s)) t
 
--- bind :: (a -> (r -> b)) -> (s -> b) -> (r ++ s -> b)
- 
 ask :: (HCons a HNil) -> a
-ask = \(HCons x HNil) -> x
-
-foo = do x <- ask
-         xs <- ask
-         return (x : xs)
-
-foo_eval = foo (HCons 'a' (HCons "bc" HNil))
-
-foo2 = do x <- ask
-          y <- ask
-          xs <- ask
-          return (x : (y : xs))
-
-foo2' = do x <- ask 
-           xs' <- do y <- ask
-                     xs <- ask
-                     return (y:xs)
-           return (x : xs')
-
-foo2_eval foo2 = foo2 (HCons 'a' (HCons 'b' (HCons "c" HNil)))
+ask = \(HCons a HNil) -> a
 
 -- Type-level append, and dual operations for split
 
