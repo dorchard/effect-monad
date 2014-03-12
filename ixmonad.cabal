@@ -1,10 +1,13 @@
 name:                   ixmonad
 version:                0.1
 synopsis:               Indexed monads library
-description:
+description:            see http://dorchard.co.uk/ixmonad
 
+license:                BSD3
+category:               Control, Monads
 copyright:              2013-14 University of Cambridge
 author:                 Dominic Orchard
+maintainer:                 Dominic Orchard
 stability:              experimental
 build-type:             Simple
 cabal-version:          >= 1.6
@@ -16,6 +19,7 @@ source-repository head
 
 library
   hs-source-dirs:       src
+                        examples
 
   exposed-modules:      Control.IxMonad
                         Control.IxMonad.Cond
