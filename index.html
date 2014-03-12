@@ -77,7 +77,9 @@ class IxMonad (m :: * -> * -> *) where
 
    return :: a -> m (Unit m) a
    (>>=) :: m s a -> (a -> m t b) -> m (Plus m s t) b
-</pre>
+</pre><br />
+</p>
+<p>
 where the type-level function <tt>Unit</tt> describes the trivial "pure" effect, and <tt>Plus</tt> combines
     effect information from subcomputations. These form a monoid. 
 </p>
