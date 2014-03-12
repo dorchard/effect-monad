@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0039)http://www.cl.cam.ac.uk/~dao29/science/ -->
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<link rel="stylesheet" href="./index_files/layout.css" type="text/css" media="all">
+<link rel="stylesheet" href="./index_files/print.css" type="text/css" media="print">
+<link rel="shortcut icon" href="http://www.cam.ac.uk/favicon.ico"><!--[if IE 6]><link rel="stylesheet" href="global/style/ie6.css" type="text/css" media="screen" /><script type="text/javascript" src="global/js/minmax.js"></script><![endif]--><!--[if IE 7]><link rel="stylesheet" href="global/style/ie7.css" type="text/css" media="screen" /><![endif]-->
+<!-- change title and metadata for each page here --> 
+<title>Indexed monads</title>
+<meta name="description" content="">
+<meta name="keywords" content="">
+<link rel="stylesheet" href="./index_files/blue.css" type="text/css" media="all">
+<link rel="stylesheet" href="./index_files/links.css" type="text/css" media="all">
+<style>
+.abstract { margin:1em 2em;}
+blockquote { background: #e3efef; padding:13px; margin:10px; text-align:justify; }
+.code { background:#e2e6ec; margin-left:20px;  padding:5px; padding-left:10px;
+        font-family:monospace; font-size:8pt; width:90%; margin-bottom:15px; margin-top:15px; }
+span.code { background:#e2e6ec; padding:2px; margin:1px;
+        font-family:monospace; font-size:8pt; }
+</style>
+</head><body class="dept" style="zoom: 1;">
+<div id="skip"> <a href="http://www.cl.cam.ac.uk/~dao29/science/#skip-content" accesskey="2">Skip to content</a>&nbsp;|&nbsp;<a href="http://www.cam.ac.uk/site/accesskeys.html" accesskey="0">Access key help</a> </div><div id="header">
+  <div id="branding"><a href="http://www.cam.ac.uk/" accesskey="1"><img src="./index_files/identifier.gif" alt="University of Cambridge" class="ucam"></a>
+</div>
+
+<div id="site-search">
+    
+       <form action="http://web-search.cam.ac.uk/query.html?qp=site%3awww.cam.ac.uk" method="get">
+      <fieldset>
+      <label for="search-term">Search</label>
+      <input name="qt" id="search-term" accesskey="4" value="" type="text">
+      <input name="qp" value="site:www.cam.ac.uk" type="hidden">
+     <input id="search-button" src="./index_files/button-search.gif" value="Search" alt="Search" title="Search" type="image">
+      </fieldset>
+    </form>
+    
+    <ul>
+    <li class="last"><a href="http://www.cam.ac.uk/global/search/">Email &amp; phone search</a></li>
+    <li><a href="http://www.cam.ac.uk/global/az.html">A–Z</a></li>
+    <li><a href="http://www.cam.ac.uk/global/contact.html">Contact us</a></li>
+  </ul>
+  
+</div><!-- end div=site-search -->
+</div><!-- end div=header -->
+
+<div id="dept-title">
+<h1><a href="http://www.cl.cam.ac.uk/">Computer Laboratory</a></h1>
+</div>
+<div id="container"> <a name="skip-content" id="skip-content"></a>
+<ul id="nav-breadcrumb">
+    <li class="first"><a href="http://www.cam.ac.uk/">University of Cambridge</a></li>
+    <li><a href="http://www.cl.cam.ac.uk/">Computer Laboratory</a></li>
+    <li><a href="http://www.cl.cam.ac.uk/~dao29">Dominic Orchard</a></li>
+</ul>
+<div id="content" style="width:100%">
+    <div id="sub-brand">
+      <p class="section">Indexed monads</p>
+    </div> 
+  <div id="content-primary">
+
+<p>
+ <b>Indexed monads</b> are a generalisation of monads where, from a functional programming perspective, a monadic
+    type constructor is annotated (\emph{indexed}) by another type representing <i>effect information</i> that
+    explains the effects of a computation, i.e., values of type <tt>M r a</tt> are effectul computations of
+    values of type <tt>a</tt> with effects <tt>r</tt>. They provide a way to give finer-grained information about
+    impurity and capture a greater class of effectul computations that normal monads.
+</p>
+
+<p>
+    In Haskell, indexed monads are defined something like: 
+<pre>
+class IxMonad (m :: * -> * -> *) where
+
+   type Unit m 
+   type Plus m s t
+
+   return :: a -> m (Unit m) a
+   (>>=) :: Inv m s t => m s a -> (a -> m t b) -> m (Plus m s t) b
+</pre>
+where the type-level function <tt>Unit</tt> describes the trivial "pure" effect, and <tt>Plus</tt> combines
+    effect information from subcomputations. These form a monoid. 
+</p>
+
+<p> 
+
+<h4>Slides</h4>
+
+    <ul><li>Coming soon (Wednesday 12th of March)</li></ul>
+</p>
+
+<p>
+    
+<h4>Code</h4>
+
+    <ul><li><a href="http://github.com/dorchard/ixmonad">GitHub</a></li>
+        <li><a href="">Hackage</a></li>
+	<li><a href="https://github.com/dorchard/stencil-specs">Stencil specifications example</a></li>
+    </ul>
+
+</p>
+
+<p>
+
+<h4>References</h4>
+
+     <ul><li>We previously proposed indexed \emph{comonads} in "<a href="http://www.cl.cam.ac.uk/~dao29/publ/coeffects-icalp13.pdf">
+       Coeffects: Unified static analysis of context-dependence</a>" (Tomas Petricek, Dominic Orchard, and Alan Mycroft, ICALP 2013). Indexed
+       comonads have various other related indexed structures to give a semantics to the lambda calculus for coeffects,
+       whereas indexed monads (their dual) do not need as much structure to give a semantics for effects.</li>
+       <li>"<a href="http://arxiv.org/abs/1401.5391">The semantic marriage of monads and effects (extended abstract)</a>"
+       (Dominic Orchard, Tomas Petricek, Alan Mycroft, 2013, [arXiv:1401.5391]) briefly explains more of the theoretical basis.</li>
+       <li>"<a href="http://dl.acm.org/citation.cfm?id=2535846">Parametric effect monads and the semantics of effect systems</a>" (Katsumata, POPL 2014)
+       introduces the same concept (called instead <i>parametric effect monads</i>) with more theoretical background.</li>
+     </ul>
+
+</p>
+
+
+
+</div>
+
+</div></div>
+
+<ul id="site-info"> 
+    <li class="copy">© 2011 Dominic Orchard
+    </li><li class="link last"><a href="http://www.cl.cam.ac.uk/privacy.html">Privacy</a></li>
+  </ul>
+
+
+</body></html>
