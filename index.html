@@ -61,7 +61,7 @@ span.code { background:#e2e6ec; padding:2px; margin:1px;
 
 <p>
  <b>Indexed monads</b> are a generalisation of monads where, from a functional programming perspective, a monadic
-    type constructor is annotated (\emph{indexed}) by another type representing <i>effect information</i> that
+    type constructor is annotated (<i>indexed</i>) by another type representing <i>effect information</i> that
     explains the effects of a computation, i.e., values of type <tt>M r a</tt> are effectul computations of
     values of type <tt>a</tt> with effects <tt>r</tt>. They provide a way to give finer-grained information about
     impurity and capture a greater class of effectul computations that normal monads.
@@ -106,7 +106,7 @@ where the type-level function <tt>Unit</tt> describes the trivial "pure" effect,
 
 <h4>References</h4>
 
-     <ul><li>We previously proposed indexed \emph{comonads} in "<a href="http://www.cl.cam.ac.uk/~dao29/publ/coeffects-icalp13.pdf">
+     <ul><li>We previously proposed indexed <i>comonads</i> in "<a href="http://www.cl.cam.ac.uk/~dao29/publ/coeffects-icalp13.pdf">
        Coeffects: Unified static analysis of context-dependence</a>" (Tomas Petricek, Dominic Orchard, and Alan Mycroft, ICALP 2013). Indexed
        comonads have various other related indexed structures to give a semantics to the lambda calculus for coeffects,
        whereas indexed monads (their dual) do not need as much structure to give a semantics for effects.</li>
