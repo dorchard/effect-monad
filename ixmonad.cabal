@@ -1,10 +1,9 @@
 name:                   ixmonad
 version:                0.2
 synopsis:               Indexed monads library
-description:            Provides the 'indexed monad' structure to Haskell with a number of indexed analogous
-of familiar monads (Reader, Writer, Maybe) and a wrapper over normal monads (Control.IxMonad.Monad).
-For more information see <http://dorchard.co.uk/ixmonad>
+description:            Provides the 'indexed monad' structure to Haskell with a number of indexed analogous of familiar monads (Reader, Writer, Maybe) and a wrapper over normal monads (Control.IxMonad.Monad). For more information see <http://dorchard.co.uk/ixmonad>.
 
+license:                BSD3
 license-file:           LICENSE
 category:               Control, Monads
 copyright:              2013-14 University of Cambridge
