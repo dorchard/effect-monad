@@ -24,6 +24,7 @@ library
   exposed-modules:      Control.IxMonad
                         Control.IxMonad.Cond
                         Control.IxMonad.Maybe
+                        Control.IxMonad.Monad
                         Control.IxMonad.Reader
                         Control.IxMonad.ReadOnlyWriter
                         Control.IxMonad.Update
