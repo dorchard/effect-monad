@@ -3,7 +3,7 @@ version:                0.15
 synopsis:               Indexed monads library
 description:            see http://dorchard.co.uk/ixmonad
 
-license:                BSD3
+license-file:           LICENSE
 category:               Control, Monads
 copyright:              2013-14 University of Cambridge
 author:                 Dominic Orchard
