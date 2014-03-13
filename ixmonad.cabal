@@ -1,5 +1,5 @@
 name:                   ixmonad
-version:                0.1
+version:                0.15
 synopsis:               Indexed monads library
 description:            see http://dorchard.co.uk/ixmonad
 
@@ -30,4 +30,4 @@ library
                         
   build-depends:        base < 5,
                         ghc-prim, 
-                        HList >= 0.2
+                        HList >= 0.3
