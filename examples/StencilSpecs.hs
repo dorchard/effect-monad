@@ -11,10 +11,14 @@ localMean = do a <- ix (Pos Z)
                c <- ix (Neg (S Z))
                return $ (a + b + c) / 3.0
 
+{-- The following causes a type error  which is what we want
+as it violates its specification
+
 fooFwd' :: Num a => Stencil (Forward (S Z)) a a
 fooFwd' = Stencil $ do a <- ix (Pos Z)
                        b <- ix (Pos (S (S Z)))
                        return $ a + b 
+-}
 
 fooFwd :: Num a => Stencil (Forward (S (S Z))) a a
 fooFwd = Stencil $ do a <- ix (Pos Z)
@@ -26,10 +30,10 @@ fooFwd = Stencil $ do a <- ix (Pos Z)
 --  The following causes a type error as it violates the specification
 --  of symmetry
 
-fooSymBroken :: (Num a) => StencilM a (Symmetrical (S Z)) a a
-fooSymBroken = StencilM $ do a <- ix (Pos Z)
-                             b <- ix (Pos (S Z))
-                             return $ a + b 
+fooSymBroken :: (Num a) => Stencil a (Symmetrical (S Z)) a a
+fooSymBroken = Stencil $ do a <- ix (Pos Z)
+                            b <- ix (Pos (S Z))
+                            return $ a + b 
 -}
 
 -- fooFwd has a 'forward' pattern to depth of 2
