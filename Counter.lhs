@@ -1,11 +1,9 @@
-%if False
+> {-# LANGUAGE TypeFamilies, EmptyDataDecls #-}
 
-> {-# LANGUAGE TypeFamilies #-}
-> {-# LANGUAGE EmptyDataDecls #-}
+> {-# LANGUAGE RebindableSyntax #-}
 
-> import IxMonad
-
-%endif
+> import Control.IxMonad
+> import Prelude hiding (Monad(..))
 
 > data Z
 > data S n
@@ -17,5 +15,12 @@
 >     type Plus Counter n Z = n
 >     type Plus Counter n (S m) = S (Plus Counter n m)
 
->     ireturn a = Counter a
->     ibind k (Counter a) = Counter . forget $ k a
+>     return a = Counter a
+>     (Counter a) >>= k = Counter . forget $ k a
+
+
+> foo :: Counter Z Int
+> foo = do x <- return 2
+>          y <- return 4
+>          return (x + y)
+

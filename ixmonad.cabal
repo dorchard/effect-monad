@@ -1,5 +1,5 @@
 name:                   ixmonad
-version:                0.2
+version:                0.3
 synopsis:               Indexed monads library
 description:            Provides the 'indexed monad' structure to Haskell with a number of indexed analogous of familiar monads (Reader, Writer, Maybe) and a wrapper over normal monads (Control.IxMonad.Monad). For more information see <http://dorchard.co.uk/ixmonad>.
 
@@ -8,7 +8,7 @@ license-file:           LICENSE
 category:               Control, Monads
 copyright:              2013-14 University of Cambridge
 author:                 Dominic Orchard
-maintainer:                 Dominic Orchard
+maintainer:             Dominic Orchard
 stability:              experimental
 build-type:             Simple
 cabal-version:          >= 1.6
@@ -24,11 +24,13 @@ library
 
   exposed-modules:      Control.IxMonad
                         Control.IxMonad.Cond
+                        Control.IxMonad.Counter
                         Control.IxMonad.Maybe
                         Control.IxMonad.Monad
                         Control.IxMonad.Reader
                         Control.IxMonad.ReadOnlyWriter
                         Control.IxMonad.Update
+                        Control.IxMonad.Vector
                         
   build-depends:        base < 5,
                         ghc-prim, 
