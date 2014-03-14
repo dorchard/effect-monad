@@ -1,5 +1,10 @@
 > {-# LANGUAGE TypeFamilies #-}
 
+This is a version of the indexed reader monad using instead tuples.
+This however violates the laws of the indexed monad (or at least,
+they hold up to isomorphism following from reassociating tuples
+and removing the unit tuple). 
+
 > import Control.IxMonad
 > import Control.IxMonad.Cond
 > import Prelude hiding (Monad(..))
