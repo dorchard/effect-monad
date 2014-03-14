@@ -4,6 +4,8 @@ import Prelude hiding (Monad(..))
 import Control.IxMonad
 import Control.IxMonad.Counter
 
+import Debug.Trace
+
 {- 
 
 The 'Counter' indexed monad is useful for counting computations

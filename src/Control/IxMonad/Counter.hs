@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies, EmptyDataDecls #-}
 
-module Control.IxMonad.Counter where
+module Control.IxMonad.Counter(Z, S, Counter, one) where
 
 import Control.IxMonad
 import Prelude hiding (Monad(..))
