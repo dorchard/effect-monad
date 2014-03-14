@@ -14,13 +14,15 @@ build-type:             Simple
 cabal-version:          >= 1.6
 tested-with:            GHC >= 7.6
 
+extra-source-files:     examples/*.hs
+
+
 source-repository head
   type: git
   location: https://github.com/dorchard/ixmonad
 
 library
   hs-source-dirs:       src
-                        examples
 
   exposed-modules:      Control.IxMonad
                         Control.IxMonad.Cond
