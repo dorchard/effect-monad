@@ -1,4 +1,4 @@
-{-# LANGUAGE RebindableSyntax, EmptyDataDecls, GADTs, TypeFamilies, UndecidableInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE RebindableSyntax, EmptyDataDecls, GADTs, TypeFamilies, UndecidableInstances, MultiParamTypeClasses, TypeOperators #-}
 
 import Prelude hiding (Monad(..))
 import Control.IxMonad
@@ -39,13 +39,13 @@ data Vector n a where
     Nil :: Vector Z a
     Cons :: a -> Vector n a -> Vector (S n) a
 
-type family Times n s 
-type instance Times Z s = Z
-type instance Times (S n) s = Plus Counter s (Times n s)
+type family n :* m 
+type instance Z :* m = Z
+type instance (S n) :* m = m :+ (n :* m)
 
 {- map' is then defined as follows -}
 
-map' :: (a -> Counter t b) -> Vector n a -> Counter (Times n t) (Vector n b)
+map' :: (a -> Counter t b) -> Vector n a -> Counter (n :* t) (Vector n b)
 map' f Nil         = return Nil
 map' f (Cons x xs) = do x' <- f x
                         xs' <- map' f xs
@@ -71,5 +71,5 @@ class LT n m
 instance LT Z (S n)
 instance LT n m => LT (S n) (S m)
 
-lineraMap :: LT t n => (a -> Counter t b) -> Vector n a -> Counter (Times n t) (Vector n b)
+lineraMap :: LT t n => (a -> Counter t b) -> Vector n a -> Counter (n :* t) (Vector n b)
 lineraMap = map'
