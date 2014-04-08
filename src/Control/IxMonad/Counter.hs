@@ -1,25 +1,19 @@
-{-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators #-}
+{-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators, DataKinds #-}
 
-module Control.IxMonad.Counter(Z, S, Counter, one, (:+)) where
+module Control.IxMonad.Counter where
 
 import Control.IxMonad
 import Prelude hiding (Monad(..))
+import GHC.TypeLits
 
-data Z
-data S n
-
-data Counter n a = Counter { forget :: a }
-
-type family n :+ m 
-type instance n :+ Z     = n
-type instance n :+ (S m) = S (n :+ m)
-
+data Counter (n :: Nat) a = Counter { forget :: a }
 instance IxMonad Counter where
-    type Unit Counter = Z
-    type Plus Counter n m = n :+ m
+    type Unit Counter = 0
+    type Plus Counter n m = n + m
+    type Inv  Counter n m = ()
 
     return a = Counter a
     (Counter a) >>= k = Counter . forget $ k a
 
-one :: a -> Counter (S Z) a
+one :: a -> Counter 1 a
 one x = Counter x

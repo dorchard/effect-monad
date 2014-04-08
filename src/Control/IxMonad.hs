@@ -1,16 +1,16 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds #-}
+{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds #-}
 
 module Control.IxMonad where 
 
 import Prelude hiding (Monad(..))
 import GHC.Prim
 
-class IxMonad (m :: * -> * -> *) where
+class IxMonad (m :: k -> * -> *) where
 
-   type Unit m 
-   type Plus m s t
+   type Unit m :: k
+   type Plus m (s :: k) (t :: k) :: k
 
-   type Inv m s t :: Constraint
+   type Inv m (s :: k) (t :: k) :: Constraint
    type Inv m s t = ()
 
    return :: a -> m (Unit m) a
