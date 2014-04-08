@@ -48,15 +48,15 @@ type family Bubble l where
 
 -- Return the minimum or maximum of two types which consistitue key-value pairs
 type family Min n m where 
-    Min (Nat n, t) (Nat m, t') = SortLeft' n m (Nat n, t) (Nat m, t')
+    Min (n, t) (m, t') = MinKey n m (n, t) (m, t')
 type family Max n m where 
-    Max (Nat n, t) (Nat m, t') = SortLeft' m n (Nat n, t) (Nat m, t')
+    Max (n, t) (m, t') = MinKey m n (n, t) (m, t')
 
-type family SortLeft' n m p q 
-type instance SortLeft' Z Z         p q = p
-type instance SortLeft' Z (S m)     p q = p
-type instance SortLeft' (S m) Z     p q = q
-type instance SortLeft' (S m) (S n) p q = SortLeft' m n p q
+type family MinKey n m p q 
+type instance MinKey (Nat Z) (Nat Z)         p q = p
+type instance MinKey (Nat Z) (Nat (S m))     p q = p
+type instance MinKey (Nat (S m)) (Nat Z)     p q = q
+type instance MinKey (Nat (S m)) (Nat (S n)) p q = MinKey (Nat m) (Nat n) p q
 
 -- Indexed reader type
 
@@ -131,14 +131,14 @@ foo3 = do xs <- ask (S Z)
       
 -- unIxR foo3 (Cons (Z, 1) (Cons (S Z, [2,3]) Nil))
 
-foo4 :: Num a => IxReader (Cons (Nat Z, a) Nil) a
+--foo4 :: Num a => IxReader (Cons (Nat Z, a) Nil) a
 foo4 = do x <- ask Z
           y <- ask Z
           return (x + y)
 
 -- unIxR foo4 (Cons (Z, 42) Nil)
      
-foo5 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
+--foo5 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
 foo5 = do xs <- ask (S Z)
           x <- ask Z
           y <- ask Z
@@ -146,7 +146,7 @@ foo5 = do xs <- ask (S Z)
 
 -- unIxR foo5 (Cons (Z, 1) (Cons (S Z, [2,3]) Nil))
 
-foo6 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
+--foo6 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
 foo6 = do x <- ask Z
           xs <- ask (S Z)
           y <- ask Z
