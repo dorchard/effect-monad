@@ -1,5 +1,5 @@
 name:                   ixmonad
-version:                0.30
+version:                0.40
 synopsis:               Indexed monads library
 description:            Provides the 'indexed monad' structure to Haskell with a number of indexed analogous of familiar monads (Reader, Writer, Maybe) and a wrapper over normal monads (Control.IxMonad.Monad). For more information see <http://dorchard.co.uk/ixmonad>.
 
@@ -30,6 +30,7 @@ library
                         Control.IxMonad.Maybe
                         Control.IxMonad.Monad
                         Control.IxMonad.Reader
+                        Control.IxMonad.ReadOnceReader
                         Control.IxMonad.ReadOnlyWriter
                         Control.IxMonad.Update
                         Control.IxMonad.Vector

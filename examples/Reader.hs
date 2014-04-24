@@ -5,26 +5,49 @@ import Control.IxMonad
 import Control.IxMonad.Cond
 import Control.IxMonad.Reader
 
-foo = do x <- ask
-         y <- ask 
-         return ("Name " ++ x ++ " age " ++ (show y))
 
---foo_eval = foo (HCons' 'a' (HCons' "bc" HNil'))
 
-foo2 = do x <- ask 
-          y <- ask
-          xs <- ask
+{- Examples -}
+
+foo :: IxReader (Cons (Nat Z, a) Nil) a
+foo = do x <- ask Z
+         return x
+      
+-- unIxR foo (Cons (Z, 42) Nil)
+
+foo2 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
+foo2 = do x <- ask Z
+          xs <- ask (S Z)
+          return (x : xs) 
+
+-- unIxR foo2 (Cons (Z, 1) (Cons (S Z, [2,3]) Nil))
+        
+foo3 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
+foo3 = do xs <- ask (S Z)
+          x <- ask Z
+          return (x : xs) 
+      
+-- unIxR foo3 (Cons (Z, 1) (Cons (S Z, [2,3]) Nil))
+
+--foo4 :: Num a => IxReader (Cons (Nat Z, a) Nil) a
+foo4 = do x <- ask Z
+          y <- ask Z
+          return (x + y)
+
+-- unIxR foo4 (Cons (Z, 42) Nil)
+     
+--foo5 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
+foo5 = do xs <- ask (S Z)
+          x <- ask Z
+          y <- ask Z
           return (x : (y : xs))
 
-foo2' = do x <- ask 
-           xs' <- do y <- ask
-                     xs <- ask
-                     return (y:xs)
-           return (x : xs')
+-- unIxR foo5 (Cons (Z, 1) (Cons (S Z, [2,3]) Nil))
 
-foo2_eval foo2 = foo2 (HCons' 'a' (HCons' 'b' (HCons' "c" HNil')))
+--foo6 :: IxReader (Cons (Nat Z, a) (Cons (Nat (S Z), [a]) Nil)) [a]
+foo6 = do x <- ask Z
+          xs <- ask (S Z)
+          y <- ask Z
+          return (x : (y : xs))
 
-foo3 = do x <- ask
-          ifM x ask (return 0)
-
-foo3_eval = foo3 (HCons' False (HCons' 42 HNil'))
+-- unIxR foo6 (Cons (Z, 1) (Cons (S Z, [2,3]) Nil))
