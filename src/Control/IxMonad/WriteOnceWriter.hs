@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
 
-module Control.IxMonad.ReadOnlyWriter (HNil'(..), HCons'(..), put, AppendA(..)) where
+module Control.IxMonad.WriteOnceWriter (HNil'(..), HCons'(..), put, AppendA(..)) where
 
 import Control.IxMonad
 import Data.HList hiding (Monad(..), append)

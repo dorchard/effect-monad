@@ -31,7 +31,7 @@ library
                         Control.IxMonad.Monad
                         Control.IxMonad.Reader
                         Control.IxMonad.ReadOnceReader
-                        Control.IxMonad.ReadOnlyWriter
+                        Control.IxMonad.WriteOnceWriter
                         Control.IxMonad.Update
                         Control.IxMonad.Vector
                         
