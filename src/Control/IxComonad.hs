@@ -13,12 +13,17 @@ module Control.IxComonad where
 
 import GHC.Prim
 
-class IxComonad (c :: * -> * -> *) where
-    type Inv c s t :: Constraint -- invariants (i.e. restrict to a subcategory of Hask)
+class IxComonad (c :: k -> * -> *) where
+    type Inv c (s :: k) (t :: k) :: Constraint -- invariants (i.e. restrict to a subcategory of Hask)
     type Inv c s t = ()
 
-    type Unit c 
-    type Plus c s t 
+    type Unit c :: k 
+    type Plus c (s :: k) (t :: k) :: k
 
-    iextract :: c (Unit c) a -> a
-    iextend :: Inv c s t => (c t a -> b) -> c (Plus c s t) a -> c t b
+    extract :: c (Unit c) a -> a
+    extend :: Inv c s t => (c t a -> b) -> c (Plus c s t) a -> c s b
+
+class IxCZip (c :: k -> * -> *) where
+    type Meet c (s :: k) (t :: k) :: k
+    type CzipInv c (s :: k) (t :: k) :: Constraint
+    iczip :: CzipInv c s t => c s a -> c t b -> c (Meet c s t) (a, b)
