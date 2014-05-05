@@ -1,19 +1,22 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs, 
-             EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances #-}
+             EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances, 
+             DataKinds, TypeOperators, PolyKinds #-}
 
 module Control.IxMonad.Reader where
 
 import Control.IxMonad
 import Prelude hiding (Monad(..))
+import GHC.TypeLits
+import Data.Proxy
 
 -- Type-level list
 
 data Nil
-data Cons x xs
+data Cons (k :: Symbol) (v :: *) (xs :: *)
 
 data List n where
     Nil :: List Nil
-    Cons :: x -> List xs -> List (Cons x xs)
+    Cons :: Proxy (k :: Symbol) -> v -> List xs -> List (Cons k v xs)
 
 -- Type-level set union
 --    implemented using lists, with a canonical ordering and duplicates removed
@@ -22,41 +25,43 @@ type family Union s t where Union s t = RemDup (Bubble (Append' s t))
 -- Type-level list append
 type family Append' s t where
        Append' Nil t = t
-       Append' (Cons x xs) ys = Cons x (Append' xs ys)
-
--- Type-level natural numbers
-
-data Z 
-data S n
-
-data Nat n where
-    Z :: Nat Z
-    S :: Nat n -> Nat (S n)
+       Append' (Cons k x xs) ys = Cons k x (Append' xs ys)
 
 -- Remove duplicates from a type-level list
 type family RemDup t where
-            RemDup Nil                  = Nil
-            RemDup (Cons a  Nil)        = Cons a Nil
-            RemDup (Cons a (Cons a as)) = Cons a (RemDup as)
-            RemDup (Cons a (Cons b as)) = Cons a (Cons b (RemDup as))
+            RemDup Nil                      = Nil
+            RemDup (Cons k a  Nil)          = Cons k a Nil
+            RemDup (Cons k a (Cons k a as)) = Cons k a (RemDup as)
+            RemDup (Cons k a (Cons j b as)) = Cons k a (Cons j b (RemDup as))
 
 -- Type-level bubble sort on list
 type family Bubble l where
-            Bubble Nil                 = Nil
-            Bubble (Cons a Nil)        = Cons a Nil
-            Bubble (Cons a (Cons b c)) = Cons (Min a b) (Bubble (Cons (Max a b) c))
+            Bubble Nil                     = Nil
+            Bubble (Cons k a Nil)          = Cons k a Nil
+            Bubble (Cons j a (Cons k b c)) = Cons (MinKey j k j k) (MinKey j k a b) 
+                                               (Bubble (Cons (MaxKey j k j k) (MaxKey j k a b) c))
 
 -- Return the minimum or maximum of two types which consistitue key-value pairs
-type family Min n m where 
+{- type family Min n m where 
     Min (n, t) (m, t') = MinKey n m (n, t) (m, t')
 type family Max n m where 
-    Max (n, t) (m, t') = MinKey m n (n, t) (m, t')
+    Max (n, t) (m, t') = MinKey m n (n, t) (m, t') -}
 
-type family MinKey n m p q 
-type instance MinKey (Nat Z) (Nat Z)         p q = p
-type instance MinKey (Nat Z) (Nat (S m))     p q = p
-type instance MinKey (Nat (S m)) (Nat Z)     p q = q
-type instance MinKey (Nat (S m)) (Nat (S n)) p q = MinKey (Nat m) (Nat n) p q
+type family MinKey (n :: Symbol) (m :: Symbol) (p :: k) (q :: k) :: k 
+type instance MinKey a b p q = ChooseMin (CmpSymbol a b) p q
+
+type family ChooseMin (g :: Ordering) (a :: Symbol) (b :: Symbol) where
+    ChooseMin LT p q = p
+    ChooseMin EQ p q = p
+    ChooseMin GT p q = q
+
+type family MaxKey (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) :: k
+type instance MaxKey a b p q = ChooseMax (CmpSymbol a b) p q
+
+type family ChooseMax (g :: Ordering) (a :: Symbol) (b :: Symbol) where
+    ChooseMax LT p q = q
+    ChooseMax EQ p q = p
+    ChooseMax GT p q = p
 
 -- Indexed reader type
 
@@ -76,8 +81,8 @@ instance IxMonad IxReader where
 
 -- 'ask' monadic primitive
 
-ask :: Nat t -> IxReader (Cons (Nat t, a) Nil) a
-ask _ = IxR $ \(Cons (t, a) Nil) -> a
+ask :: Proxy (k::Symbol) -> IxReader (Cons k a Nil) a
+ask Proxy = IxR $ \(Cons Proxy a Nil) -> a
 
 -- Split operation (with type level version)
 
@@ -87,23 +92,23 @@ class Split s t z where
 instance Split Nil Nil Nil where
    split Nil = (Nil, Nil) 
 
-instance Split (Cons x xs) Nil (Cons x xs) where
+instance Split (Cons k x xs) Nil (Cons k x xs) where
     split t = (t, Nil)
 
-instance Split Nil (Cons x xs) (Cons x xs) where
+instance Split Nil (Cons k x xs) (Cons k x xs) where
    split t = (Nil, t)
 
-instance Split (Cons x Nil) (Cons x Nil) (Cons x Nil) where
-   split (Cons x Nil) = (Cons x Nil, Cons x Nil)
+instance Split (Cons (k :: Symbol) x Nil) (Cons (k :: Symbol) x Nil) (Cons (k :: Symbol) x Nil) where
+   split (Cons Proxy x Nil) = (Cons Proxy x Nil, Cons Proxy x Nil)
 
-instance Split xs ys zs => Split (Cons x xs) (Cons x ys) (Cons x zs) where
-   split (Cons x zs) = let (xs', ys') = split zs
-                        in (Cons x xs', Cons x ys')
+instance Split xs ys zs => Split (Cons k x xs) (Cons k x ys) (Cons k x zs) where
+   split (Cons k x zs) = let (xs', ys') = split zs
+                         in (Cons k x xs', Cons k x ys')
 
-instance (Split xs ys zs) => Split (Cons (r, x) xs) (Cons (s, y) ys) (Cons (r, x) (Cons (s, y) zs)) where
-   split (Cons x (Cons y zs)) = let (xs', ys') = split zs
-                                 in (Cons x xs', Cons y ys')
+instance (Split xs ys zs) => Split (Cons j x xs) (Cons k y ys) (Cons j x (Cons k y zs)) where
+   split (Cons j x (Cons k y zs)) = let (xs', ys') = split zs
+                                    in (Cons j x xs', Cons k y ys')
 
-instance (Split xs ys zs) => Split (Cons (r, x) xs) (Cons (s, y) ys) (Cons (s, y) (Cons (r, x) zs)) where
-   split (Cons x (Cons y zs)) = let (xs', ys') = split zs
-                                 in (Cons y xs', Cons x ys')
+instance (Split xs ys zs) => Split (Cons j x xs) (Cons k y ys) (Cons k y (Cons j x zs)) where
+   split (Cons j x (Cons k y zs)) = let (xs', ys') = split zs
+                                    in (Cons k y xs', Cons j x ys')
