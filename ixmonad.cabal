@@ -30,6 +30,7 @@ library
                         Control.IxMonad.Maybe
                         Control.IxMonad.Monad
                         Control.IxMonad.Reader
+                        Control.IxMonad.ReaderNat
                         Control.IxMonad.ReadOnceReader
                         Control.IxMonad.WriteOnceWriter
                         Control.IxMonad.Update

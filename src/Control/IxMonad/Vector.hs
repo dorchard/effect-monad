@@ -26,6 +26,7 @@ append (Cons x xs) ys = Cons x (append xs ys)
 
 instance IxMonad Vector where
     -- Effect monoid is (N, *, 1)
+    type Inv Vector s t = ()
 
     type Unit Vector = S Z
 
