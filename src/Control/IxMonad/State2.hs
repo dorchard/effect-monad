@@ -27,7 +27,7 @@ data List n where
 --    implemented using lists, with a canonical ordering and duplicates removed
 type family Union s t where Union s t = RemDup (BSort (Append' s t))
 
-union :: (RemDuper (BSort (Append' s t)) (RemDup (BSort (Append' s t)))) => List s -> List t -> List (Union s t)
+union :: (Sortable (Append' s t), RemDuper (BSort (Append' s t)) (RemDup (BSort (Append' s t)))) => List s -> List t -> List (Union s t)
 union s t = remDup (bsort (append s t))
 
 -- Type-level list append
@@ -93,15 +93,19 @@ instance IntrDuper as as' => IntrDuper (Cons k R a (Cons j W b as)) (Cons k R a 
 
 type family Intersect s t where Intersect s t = IntrDup (BSort (Append' s t))
 
-intersect :: (IntrDuper (BSort (Append' s t)) (IntrDup (BSort (Append' s t)))) => List s -> List t -> List (Intersect s t)
+intersect :: (Sortable (Append' s t), IntrDuper (BSort (Append' s t)) (IntrDup (BSort (Append' s t)))) => List s -> List t -> List (Intersect s t)
 intersect s t = intrDup (bsort (append s t))
 
 
-type family BSort l where BSort l = Bubble l l
+type family BSort l where BSort l = BubbleA l l
 
 type family Bubble l l' where
     Bubble l Nil = l
     Bubble l (Cons k s a y) = Bubble (BubbleOne l) y
+
+type family BubbleA l l' where
+    BubbleA l Nil = l
+    BubbleA l (Cons k s a y) = BubbleOne (BubbleA l y)
 
 -- Type-level bubble sort on list
 type family BubbleOne l where
@@ -111,12 +115,30 @@ type family BubbleOne l where
                        Cons (MinKey j k j k)  (MinKey j k s t) (MinKey j k a b)
                            (BubbleOne (Cons (MaxKey j k j k) (MaxKey j k s t) (MaxKey j k a b) xs))
 
-bsort :: Bubbler l => List l -> List (BSort l)
-bsort x = bubble x x
-           where -- bubble :: List (Bubble (BSort l) l) -> List l -> List (Bubble (BSort l) l)
-                 bubble :: List l -> List l' -> List l''
-                 bubble l Nil = l
-                 bubble l (Cons _ _ _ y) = bubble (bubble1 l) y
+type Sortable l = BubbleAer l l
+
+class BubbleAer l l' where
+    bubbleAer :: List l -> List l' -> List (BubbleA l l')
+
+instance BubbleAer l Nil where
+    bubbleAer l Nil = l
+
+instance (BubbleAer l y, Bubbler (BubbleA l y)) => BubbleAer l (Cons k s a y) where
+    bubbleAer l (Cons k s a y) = bubble1 (bubbleAer l y)
+
+bsort :: (BubbleAer l l) => List l -> List (BSort l)
+bsort x = bubbleAer x x
+{-           where -- bubble :: List (Bubble (BSort l) l) -> List l -> List (Bubble (BSort l) l)
+                 bubble :: List l -> List l -> List (BSort l)
+                 bubble x y = bubbleA x y
+
+                 bubbleA :: List l -> List l' -> List (BubbleA l l')
+                 bubbleA l Nil = l
+                 bubbleA l (Cons k s a y) = bubble1 (bubbleA l y)
+                 {- 
+                 bubble' :: List (BubbleOne l) -> List l' -> List l
+                 bubble' l Nil = l
+                 bubble' l (Cons _ _ _ y) = bubble' (bubble1 l) y -}  -}
 
 class Bubbler l where
     bubble1 :: List l -> List (BubbleOne l)
@@ -223,6 +245,7 @@ instance IxMonad IxState where
                             Bubbler (Append' (Writes s) (Reads t)), 
                             Readers t, 
                             Readers s, 
+                            Sortable (Append' (Writes s) (Reads t)), 
                             Split s t (Reads (Union s t)), 
                             RemDuper (BSort (Append' (Writes s) (Writes t)))
                                      (Union (Writes s) (Writes t)),
