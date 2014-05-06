@@ -111,16 +111,12 @@ type family BubbleOne l where
                        Cons (MinKey j k j k)  (MinKey j k s t) (MinKey j k a b)
                            (BubbleOne (Cons (MaxKey j k j k) (MaxKey j k s t) (MaxKey j k a b) xs))
 
+bsort :: Bubbler l => List l -> List (BSort l)
 bsort x = bubble x x
-
-class Sortable l where
-   bubble :: List (Bubble l'' l) -> List l -> List (Bubble l' l)
-
-instance Sortable Nil where
-    bubble l Nil = l
-
-instance Sortable xs => Sortable (Cons k s a xs) where
-    bubble l (Cons _ _ _ y) = bubble (bubble1 l) y
+           where -- bubble :: List (Bubble (BSort l) l) -> List l -> List (Bubble (BSort l) l)
+                 bubble :: List l -> List l' -> List l''
+                 bubble l Nil = l
+                 bubble l (Cons _ _ _ y) = bubble (bubble1 l) y
 
 class Bubbler l where
     bubble1 :: List l -> List (BubbleOne l)
