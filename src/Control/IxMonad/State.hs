@@ -2,21 +2,23 @@
              EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances, 
              DataKinds, TypeOperators, PolyKinds #-}
 
-module Control.IxMonad.Reader where
+module Control.IxMonad.State where
 
 import Control.IxMonad
 import Prelude hiding (Monad(..))
 import GHC.TypeLits
 import Data.Proxy
 
+data Sort = R | W | U
+
 -- Type-level list
 
 data Nil
-data Cons (k :: Symbol) (v :: *) (xs :: *)
+data Cons (k :: Symbol) (s :: Sort) (v :: *) (xs :: *)
 
 data List n where
     Nil :: List Nil
-    Cons :: Proxy (k :: Symbol) -> v -> List xs -> List (Cons k v xs)
+    Cons :: Proxy (k :: Symbol) -> Proxy (s :: Sort) -> v -> List xs -> List (Cons k s v xs)
 
 -- Type-level set union
 --    implemented using lists, with a canonical ordering and duplicates removed
@@ -25,21 +27,24 @@ type family Union s t where Union s t = RemDup (Bubble (Append' s t))
 -- Type-level list append
 type family Append' s t where
        Append' Nil t = t
-       Append' (Cons k x xs) ys = Cons k x (Append' xs ys)
+       Append' (Cons k s x xs) ys = Cons k s x (Append' xs ys)
 
 -- Remove duplicates from a type-level list
 type family RemDup t where
-            RemDup Nil                      = Nil
-            RemDup (Cons k a  Nil)          = Cons k a Nil
-            RemDup (Cons k a (Cons k a as)) = Cons k a (RemDup as)
-            RemDup (Cons k a (Cons j b as)) = Cons k a (Cons j b (RemDup as))
+            RemDup Nil                        = Nil
+            RemDup (Cons k s a  Nil)          = Cons k s a Nil
+            RemDup (Cons k s a (Cons k s a as)) = Cons k s a (RemDup as)
+            RemDup (Cons k s a (Cons k t a as)) = Cons k U a (RemDup as)
+            RemDup (Cons k s a (Cons j t b as)) = Cons k s a (Cons j t b (RemDup as))
+
 
 -- Type-level bubble sort on list
 type family Bubble l where
-            Bubble Nil                     = Nil
-            Bubble (Cons k a Nil)          = Cons k a Nil
-            Bubble (Cons j a (Cons k b c)) = Cons (MinKey j k j k) (MinKey j k a b) 
-                                               (Bubble (Cons (MaxKey j k j k) (MaxKey j k a b) c))
+            Bubble Nil                       = Nil
+            Bubble (Cons k s a Nil)          = Cons k s a Nil
+            Bubble (Cons j s a (Cons k t b c)) = 
+                       Cons (MinKey j k j k)  (MinKey j k s t) (MinKey j k a b)
+                           (Bubble (Cons (MaxKey j k j k) (MaxKey j k s t) (MaxKey j k a b) c))
 
 -- Return the minimum or maximum of two types which consistitue key-value pairs
 type MinKey (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = Choose (CmpSymbol a b) p q
@@ -50,26 +55,50 @@ type family Choose (g :: Ordering) a b where
     Choose EQ p q = p
     Choose GT p q = q
 
--- Indexed reader type
 
-data IxReader s a = IxR { unIxR :: List s -> a }
+-- Indexed state type
 
--- Indexed monad instance
+data IxState s a = IxS { unIxS :: List (LHS s) -> (a, List (RHS s)) }
 
-instance IxMonad IxReader where
-    type Inv IxReader s t = Split s t (Union s t)
-
-    type Unit IxReader = Nil
-    type Plus IxReader s t = Union s t
-
-    return x = IxR $ \Nil -> x
-    (IxR e) >>= k = IxR $ \xs -> let (s, t) = split xs
-                                 in (unIxR $ k (e s)) t
+type family LHS t where
+    LHS Nil = Nil
+    LHS (Cons k R a xs) = Cons k R a (LHS xs)
+    LHS (Cons k W a xs) = LHS xs
+    LHS (Cons k U a xs) = Cons k U a (LHS xs)
+type family RHS t where
+    RHS Nil = Nil
+    RHS (Cons k R a xs) = RHS xs
+    RHS (Cons k W a xs) = Cons k W a (RHS xs)
+    RHS (Cons k U a xs) = Cons k U a (RHS xs)
 
 -- 'ask' monadic primitive
 
-ask :: Proxy (k::Symbol) -> IxReader (Cons k a Nil) a
-ask Proxy = IxR $ \(Cons Proxy a Nil) -> a
+get :: Proxy (k::Symbol) -> IxState (Cons k R a Nil) a
+get Proxy = IxS $ \(Cons Proxy Proxy a Nil) -> (a, Nil)
+
+put :: Proxy (k::Symbol) -> a -> IxState (Cons k W a Nil) a
+put Proxy a = IxS $ \Nil -> (a, Cons Proxy Proxy a Nil)
+
+
+{-
+
+-- Indexed monad instance
+
+instance IxMonad IxState where
+    type Inv IxReader s t = Split s t (Union s t)
+
+    type Unit IxState = Nil
+    type Plus IxState s t = Union s t
+
+    return x = IxS $ \Nil -> x
+
+    (IxR e) >>= k = IxR $ \xs -> let (s, t) = split xs
+                                     (a, st') = unIxR $ e s
+                                     (b, st'') = k a t
+                                 in (b, st' `append` st'')
+
+
+
 
 -- Split operation (with type level version)
 
@@ -104,3 +133,4 @@ foo :: IxReader (Cons "x" a (Cons "xs" [a] Nil)) [a]
 foo = do x <- ask (Proxy::(Proxy "x"))
          xs <- ask (Proxy::(Proxy "xs"))
          return (x:xs)
+-}
