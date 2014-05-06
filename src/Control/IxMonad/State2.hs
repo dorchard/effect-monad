@@ -2,7 +2,7 @@
              EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances, 
              DataKinds, TypeOperators, PolyKinds, NoMonomorphismRestriction, FlexibleContexts,
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
-             InstanceSigs #-}
+             InstanceSigs, IncoherentInstances #-}
 
 
 module Control.IxMonad.State where
@@ -11,8 +11,9 @@ import Control.IxMonad
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
+import Debug.Trace
 
-data Sort = R | W 
+data Sort = R | W | RW
 
 -- Type-level list
 
@@ -22,6 +23,25 @@ data Cons (k :: Symbol) (s :: Sort) (v :: *) (xs :: *)
 data List n where
     Nil :: List Nil
     Cons :: Proxy (k :: Symbol) -> Proxy (s :: Sort) -> v -> List xs -> List (Cons k s v xs)
+
+instance Show (List Nil) where
+    show Nil = "Nil"
+instance (ShowMore (Proxy k), 
+          ShowMore (Proxy s), Show v, Show (List xs)) => Show (List (Cons k s v xs)) where
+    show (Cons k s v xs) = "Cons " ++ (showM k) ++ " " ++ (showM s) ++ " " ++ (show v) ++ " " ++ show xs
+
+class ShowMore t where
+    showM :: t -> String
+instance ShowMore (Proxy R) where
+    showM _ = "R"
+instance ShowMore (Proxy W) where
+    showM _ = "W"
+instance ShowMore (Proxy RW) where
+    showM _ = "RW"
+instance ShowMore (Proxy "x") where
+    showM _ = "x"
+instance ShowMore (Proxy "y") where
+    showM _ = "y"
 
 -- Type-level set union
 --    implemented using lists, with a canonical ordering and duplicates removed
@@ -39,7 +59,9 @@ type family Append' s t where
 type family RemDup t where
             RemDup Nil                        = Nil
             RemDup (Cons k s a  Nil)          = Cons k s a Nil
-            RemDup (Cons k s a (Cons k s a as)) = Cons k s a (RemDup as)
+            RemDup (Cons k s a (Cons k s a as)) = RemDup (Cons k s a as)
+            RemDup (Cons k R a (Cons k W a as)) = RemDup (Cons k RW a as)
+            RemDup (Cons k W a (Cons k R a as)) = RemDup (Cons k RW a as)
             RemDup (Cons k s a (Cons j t b as)) = Cons k s a (Cons j t b (RemDup as))
 
 class RemDuper t v where
@@ -49,8 +71,8 @@ instance RemDuper Nil Nil where
 instance RemDuper (Cons k s a Nil) (Cons k s a Nil) where
     remDup (Cons k s a Nil) = (Cons k s a Nil)
 
-instance RemDuper as as' => RemDuper (Cons k s a (Cons k s a as)) (Cons k s a as') where
-    remDup (Cons k s a (Cons _ _ _ xs)) = (Cons k s a (remDup xs))
+instance RemDuper (Cons k s a as) as' => RemDuper (Cons k s a (Cons k s a as)) as' where
+    remDup (Cons k s a (Cons _ _ _ xs)) = remDup (Cons k s a xs)
 
 instance RemDuper as as' => RemDuper (Cons k s a (Cons j t b as)) (Cons k s a (Cons j t b as')) where
     remDup (Cons k s a (Cons j t b xs)) = Cons k s a (Cons j t b (remDup xs))
@@ -60,12 +82,15 @@ instance RemDuper as as' => RemDuper (Cons k s a (Cons j t b as)) (Cons k s a (C
 type family IntrDup t where
             IntrDup Nil                        = Nil
             IntrDup (Cons k s a  Nil)          = Cons k s a Nil
-            IntrDup (Cons k W a (Cons k W a as)) = IntrDup as
-            IntrDup (Cons k R a (Cons k R a as)) = Cons k R a (IntrDup as)
-            IntrDup (Cons k W a (Cons k R a as)) = Cons k R a (IntrDup as)
-            IntrDup (Cons k R a (Cons k W a as)) = Cons k R a (IntrDup as)
-            IntrDup (Cons k W a (Cons j R b as)) = Cons j R b (IntrDup as)
-            IntrDup (Cons k R a (Cons j W b as)) = Cons k R a (IntrDup as)
+            IntrDup (Cons k s a (Cons k s b as)) = IntrDup (Cons k R b as)
+
+            IntrDup (Cons k W a (Cons k R b as)) = IntrDup (Cons k R a as)
+            IntrDup (Cons k R a (Cons k W b as)) = IntrDup (Cons k R b as)
+
+            IntrDup (Cons k W a (Cons j R b as)) = IntrDup (Cons j R b as)
+            IntrDup (Cons k R a (Cons j W b as)) = IntrDup (Cons k R a as)
+            IntrDup (Cons k W a (Cons j W b as)) = IntrDup as
+            IntrDup (Cons k R a (Cons j R b as)) = Cons k R a (IntrDup (Cons j R b as))
 
 class IntrDuper t v where
     intrDup :: List t -> List v
@@ -74,21 +99,35 @@ instance IntrDuper Nil Nil where
 instance IntrDuper (Cons k s a Nil) (Cons k s a Nil) where
     intrDup (Cons k s a Nil) = (Cons k s a Nil)
 
-instance IntrDuper as as' => IntrDuper (Cons k W a (Cons k W a as)) as' where
+instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k R a (Cons k R b as)) as' where
+    intrDup (Cons _ _ _ (Cons k s a xs)) = "same k and s" `trace` intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k W a (Cons k W b as)) as' where
+    intrDup (Cons _ _ _ (Cons k s a xs)) = "same k and s" `trace` intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k RW a (Cons k RW b as)) as' where
+    intrDup (Cons _ _ _ (Cons k s a xs)) = "same k and s" `trace` intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper (Cons k R a as) as' => IntrDuper (Cons k W a (Cons k R b as)) as' where
+    intrDup (Cons k _ a (Cons _ _ _ xs)) = "W and R" `trace` intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k R a (Cons k W b as)) as' where
+    intrDup (Cons _ _ _ (Cons k _ a xs)) = "R and W" `trace` intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper (Cons j R b as) as' => IntrDuper (Cons k W a (Cons j R b as)) as' where
+    intrDup (Cons _ _ _ (Cons k _ a xs)) = "W and R diff " `trace` intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper (Cons k R a as) as' => IntrDuper (Cons k R a (Cons j W b as)) as' where
+    intrDup (Cons k _ a (Cons _ _ _ xs)) = "R and W diff" `trace`  intrDup (Cons k (Proxy::(Proxy R)) a xs)
+
+instance IntrDuper as as' => IntrDuper (Cons k W a (Cons j W b as)) as' where
     intrDup (Cons _ _ _ (Cons _ _ _ xs)) = intrDup xs
 
-instance IntrDuper as as' => IntrDuper (Cons k R a (Cons k R a as)) (Cons k R a as') where
-    intrDup (Cons _ _ _ (Cons k s a xs)) = Cons k s a (intrDup xs)
+instance (ShowMore (Proxy k), ShowMore (Proxy j), IntrDuper (Cons j R b as) as') => 
+           IntrDuper (Cons k R a (Cons j R b as)) (Cons k R a as') where
+    intrDup (Cons k s a (Cons j t b xs)) = ("two different Rs: " ++ showM j ++ " " ++ showM k) `trace` Cons k s a (intrDup (Cons j t b xs))
 
-instance IntrDuper as as' => IntrDuper (Cons k W a (Cons k R a as)) (Cons k R a as') where
-    intrDup (Cons k _ a (Cons _ _ _ xs)) = (Cons k Proxy a (intrDup xs))
-instance IntrDuper as as' => IntrDuper (Cons k R a (Cons k W a as)) (Cons k R a as') where
-    intrDup (Cons _ _ _ (Cons k _ a xs)) = (Cons k Proxy a (intrDup xs))
 
-instance IntrDuper as as' => IntrDuper (Cons k W a (Cons j R b as)) (Cons j R b as') where
-    intrDup (Cons _ _ _ (Cons k _ a xs)) = (Cons k Proxy a (intrDup xs))
-instance IntrDuper as as' => IntrDuper (Cons k R a (Cons j W b as)) (Cons k R a as') where
-    intrDup (Cons k _ a (Cons _ _ _ xs)) = (Cons k Proxy a (intrDup xs))
 
 
 type family Intersect s t where Intersect s t = IntrDup (BSort (Append' s t))
@@ -194,6 +233,7 @@ data IxState s a = IxS { unIxS :: List (Reads s) -> (a, (List (Writes s))) }
 type family Reads t where
     Reads Nil = Nil
     Reads (Cons k R a xs) = Cons k R a (Reads xs)
+    Reads (Cons k RW a xs) = Cons k R a (Reads xs)
     Reads (Cons k s a xs) = Reads xs
 
 class Readers t where 
@@ -202,12 +242,15 @@ instance Readers Nil where
     reads Nil = Nil
 instance Readers xs => Readers (Cons k R a xs) where
     reads (Cons k Proxy a xs) = Cons k Proxy a (reads xs)
+instance Readers xs => Readers (Cons k RW a xs) where
+    reads (Cons k Proxy a xs) = Cons k Proxy a (reads xs)
 instance Readers xs => Readers (Cons k W a xs) where
     reads (Cons k Proxy a xs) = reads xs
 
 type family Writes t where
     Writes Nil = Nil
     Writes (Cons k W a xs) = Cons k W a (Writes xs)
+    Writes (Cons k RW a xs) = Cons k W a (Writes xs)
     Writes (Cons k s a xs) = Writes xs
 
 class Writers t where 
@@ -215,6 +258,8 @@ class Writers t where
 instance Writers Nil where
     writes Nil = Nil
 instance Writers xs => Writers (Cons k W a xs) where
+    writes (Cons k Proxy a xs) = Cons k Proxy a (writes xs)
+instance Writers xs => Writers (Cons k RW a xs) where
     writes (Cons k Proxy a xs) = Cons k Proxy a (writes xs)
 instance Writers xs => Writers (Cons k R a xs) where
     writes (Cons k Proxy a xs) = writes xs
@@ -313,8 +358,33 @@ instance (Split xs ys zs) => Split (Cons j s x xs) (Cons k t y ys) (Cons k t y (
    join (Cons j s x xs) (Cons k t y ys) = Cons k t y (Cons j s x (join xs ys))
 
 
+-- foo :: IxState (Cons "x" R a (Cons "y" R [a] (Cons "y" W [a] Nil))) [a]
+
+{-
+foo :: IxState (Cons "x" RW Int Nil) Int 
 foo = do x <- get (Proxy::(Proxy "x"))
          y <- get (Proxy::(Proxy "y"))
-         put (Proxy::(Proxy "y")) (x : y)
+         put (Proxy::(Proxy "x")) x
          z <- get (Proxy::(Proxy "y"))
-         return (x : z)
+         return (x:z)
+-}
+
+{-
+foo2 :: IxState (Cons "x" RW Int Nil) Int 
+foo2 = do x <- get (Proxy::(Proxy "x"))
+          put (Proxy::(Proxy "x")) x
+          return x
+-}
+
+--foo_go = (unIxS foo) (Cons (Proxy::(Proxy "x")) (Proxy::(Proxy R)) 1
+--                              (Cons (Proxy::(Proxy "y")) (Proxy::(Proxy R)) [2,3] Nil))
+
+x = Proxy::(Proxy "x")
+y = Proxy::(Proxy "y")
+r = Proxy::(Proxy R)
+w = Proxy::(Proxy W)
+
+{-test = (Cons x w 1 (Cons y r 5 Nil)) `intersect` (Cons x r 3 (Cons y r 9 Nil))
+test' = bsort $ (Cons x w 1 (Cons y r 5 Nil)) `append` (Cons x r 3 (Cons y r 9 Nil))-}
+
+test = (Cons x r 4 Nil) `intersect` (Cons x w 5 Nil)
