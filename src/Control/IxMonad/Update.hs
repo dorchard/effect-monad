@@ -1,42 +1,31 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax, GADTs #-}
 
 module Control.IxMonad.Update where 
 
 import Control.IxMonad
-import Data.HList hiding (Monad(..), append)
 import Prelude hiding (Monad(..))
 
-data Put a = Put a deriving Show
-data NoPut = NoPut deriving Show
+data Put a
+data NoPut
+
+data Update p where
+   Put :: a -> Update (Put a)
+   NoPut :: Update NoPut
+
+data IxUpdate w a = IxUpdate { runIxUpdate :: (a, Update w) }
 
 -- Uupdate monad
-instance IxMonad (,) where -- i.e., m p a = (p, a)
-    type Inv (,) s t = UpdateBind s t
+instance IxMonad IxUpdate where 
+    type Unit IxUpdate = NoPut
+    type Plus IxUpdate s NoPut   = s
+    type Plus IxUpdate s (Put t) = Put t
 
-    type Unit (,) = NoPut
-    type Plus (,) s NoPut = s
-    type Plus (,) s (Put t) = Put t
-
-    return x = (NoPut, x)
-    x >>= k = bind x k 
-
-class UpdateBind s t where
-    bind :: (s, a) -> (a -> (t, b)) -> (Plus (,) s t, b)
-
-instance UpdateBind s NoPut where
-    bind (s, a) k = let (NoPut, b) = k a in (s, b)
-
-instance UpdateBind s (Put t) where
-    bind (s, a) k = k a
+    return x = IxUpdate (x, NoPut)
+    (IxUpdate (a, w)) >>= k = IxUpdate (update w (runIxUpdate (k a)))
+                               
+update :: Update s -> (b, Update t) -> (b, Update (Plus IxUpdate s t))
+update w (b, NoPut) = (b, w)
+update _ (b, Put w) = (b, Put w)
 
 put :: a -> (Put a, ())
 put x = (Put x, ())
-
-
-{- In GHC 7.8 can get rid of the 'Put' wrapper and use 'closed' family
-
-type Plus (,) s t where
-  Plus (,) s () = s
-  Plus (,) s t  = t   
- 
--}
