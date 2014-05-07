@@ -11,7 +11,7 @@ class IxMonad (m :: k -> * -> *) where
    type Plus m (f :: k) (g :: k) :: k
 
    type Inv m (f :: k) (g :: k) :: Constraint
-   type Inv m s t = ()
+   type Inv m f g = ()
 
    return :: a -> m (Unit m) a
    (>>=) :: Inv m f g => m f a -> (a -> m g b) -> m (Plus m f g) b

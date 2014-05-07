@@ -27,5 +27,5 @@ update :: Update s -> (b, Update t) -> (b, Update (Plus IxUpdate s t))
 update w (b, NoPut) = (b, w)
 update _ (b, Put w) = (b, Put w)
 
-put :: a -> (Put a, ())
-put x = (Put x, ())
+put :: a -> IxUpdate (Put a) ()
+put x = IxUpdate ((), Put x)
