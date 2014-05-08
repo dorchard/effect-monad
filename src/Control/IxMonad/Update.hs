@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax, GADTs #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax, 
+             GADTs, EmptyDataDecls #-}
 
 module Control.IxMonad.Update where 
 
@@ -8,24 +9,25 @@ import Prelude hiding (Monad(..))
 data Put a
 data NoPut
 
-data Update p where
-   Put :: a -> Update (Put a)
-   NoPut :: Update NoPut
+data Action p where
+   Put :: a -> Action (Put a)
+   NoPut :: Action NoPut
 
-data IxUpdate w a = IxUpdate { runIxUpdate :: (a, Update w) }
+data Update w a = Update { runUpdate :: (a, Action w) }
 
 -- Uupdate monad
-instance IxMonad IxUpdate where 
-    type Unit IxUpdate = NoPut
-    type Plus IxUpdate s NoPut   = s
-    type Plus IxUpdate s (Put t) = Put t
+instance IxMonad Update where 
+    type Unit Update = NoPut
+    type Plus Update s NoPut   = s
+    type Plus Update s (Put t) = Put t
 
-    return x = IxUpdate (x, NoPut)
-    (IxUpdate (a, w)) >>= k = IxUpdate (update w (runIxUpdate (k a)))
+    return x = Update (x, NoPut)
+    (Update (a, w)) >>= k =
+         Update $ update w (runUpdate $ k a)
                                
-update :: Update s -> (b, Update t) -> (b, Update (Plus IxUpdate s t))
-update w (b, NoPut) = (b, w)
-update _ (b, Put w) = (b, Put w)
+update :: Action s -> (b, Action t) -> (b, Action (Plus Update s t))
+update w (b, NoPut)   = (b, w)
+update _ (b, Put w'') = (b, Put w'')
 
-put :: a -> IxUpdate (Put a) ()
-put x = IxUpdate ((), Put x)
+put :: a -> Update (Put a) ()
+put x = Update ((), Put x)

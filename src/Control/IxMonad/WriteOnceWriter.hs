@@ -1,34 +1,23 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, 
+             TypeOperators, DataKinds, KindSignatures #-}
 
-module Control.IxMonad.WriteOnceWriter (HNil'(..), HCons'(..), put, AppendA(..)) where
+module Control.IxMonad.WriteOnceWriter (put, WriteOnce(..)) where
 
 import Control.IxMonad
-import Data.HList hiding (Monad(..), append)
+import Control.IxMonad.Helpers.List
 import Prelude hiding (Monad(..))
 
-instance IxMonad (,) where
-    type Inv (,) s t = AppendA s t
+data WriteOnce (w :: [*]) a = W { runWriteOnce :: (a, List w) }
 
-    type Unit (,) = HNil'
-    type Plus (,) s t = Append s t
+instance IxMonad WriteOnce where
+    type Unit WriteOnce = '[]
+    type Plus WriteOnce s t = s :++ t
 
-    return x = (HNil', x)
-    (r, a) >>= k = let (s, b) = k a in (r `append` s, b)
+    return x = W (x, Nil)
+    (W (a, r)) >>= k = let (W (b, s)) = k a in W (b, r `append` s)
  
-put :: a -> (HCons' a HNil', ())
-put x = (HCons' x HNil', ())
+put :: a -> WriteOnce (a ': '[]) ()
+put x = W ((), Cons x Nil)
 
--- Type-level append
 
-class AppendA s t where
-    type Append s t
-    append :: s -> t -> Append s t
-
-instance AppendA HNil' t where
-    type Append HNil' t = t
-    append HNil' t = t
-
-instance AppendA xs ys => AppendA (HCons' x xs) ys where
-    type Append (HCons' x xs) ys = HCons' x (Append xs ys)
-    append (HCons' x xs) ys = HCons' x (append xs ys)
 

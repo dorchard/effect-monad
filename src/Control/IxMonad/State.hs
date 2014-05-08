@@ -4,7 +4,6 @@
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
              InstanceSigs, IncoherentInstances #-}
 
-
 module Control.IxMonad.State where
 
 import Control.IxMonad
@@ -71,7 +70,7 @@ type family RemDup t where
             RemDup (Cons k s a  Nil)          = Cons k s a Nil
             RemDup (Cons k s a (Cons k s b as)) = RemDup (Cons k s b as)
             RemDup (Cons k s a (Cons k t a as)) = RemDup (Cons k RW a as)
-            RemDup (Cons k s a (Cons j t b as)) = Cons k s a (Cons j t b (RemDup as))
+            RemDup (Cons k s a (Cons j t b as)) = Cons k s a (RemDup (Cons j t b as))
 
 class RemDuper t v where
     remDup :: List t -> List v
@@ -83,8 +82,8 @@ instance RemDuper (Cons k s b as) as' => RemDuper (Cons k s a (Cons k s b as)) a
     remDup (Cons _ _ _ (Cons k s a xs)) = remDup (Cons k s a xs)
 instance RemDuper (Cons k RW b as) as' => RemDuper (Cons k s a (Cons k t b as)) as' where
     remDup (Cons _ _ _ (Cons k _ a xs)) = remDup (Cons k (Proxy::(Proxy RW)) a xs)
-instance RemDuper as as' => RemDuper (Cons k s a (Cons j t b as)) (Cons k s a (Cons j t b as')) where
-    remDup (Cons k s a (Cons j t b xs)) = Cons k s a (Cons j t b (remDup xs))
+instance RemDuper (Cons j t b as) as' => RemDuper (Cons k s a (Cons j t b as)) (Cons k s a as') where
+    remDup (Cons k s a (Cons j t b xs)) = Cons k s a (remDup (Cons j t b xs))
 
 -- Replaces reads with writes
 type family IntrDup t where

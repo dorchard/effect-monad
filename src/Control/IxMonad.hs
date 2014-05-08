@@ -2,6 +2,7 @@
 
 module Control.IxMonad where 
 
+import Control.IxMonad.Helpers.Set
 import Prelude hiding (Monad(..))
 import GHC.Prim
 
