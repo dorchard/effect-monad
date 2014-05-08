@@ -16,8 +16,8 @@ instance IxMonad Writer where
     type Plus Writer s t = Union s t
 
     return x = Writer (x, Empty)
-    (Writer (a, w)) >>= k = let (Writer (b, w')) = k a
-                            in Writer (b, w `union` w')
+    (Writer (a, w)) >>= k = let Writer (b, w') = k a
+                            in  Writer (b, w `union` w')
 
 put :: Proxy (k :: Symbol) -> v -> Writer '[k :-> v] ()
 put k v = Writer ((), Ext k v Empty)
