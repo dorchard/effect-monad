@@ -31,11 +31,10 @@ library
                         Control.IxMonad.Monad
                         Control.IxMonad.Reader
                         Control.IxMonad.ReaderNat
-                        Control.IxMonad.ReadOnceReader
-                        Control.IxMonad.WriteOnceWriter
-                        Control.IxMonad.Update
+                        -- Control.IxMonad.ReadOnceReader
+                        -- Control.IxMonad.WriteOnceWriter
+                        -- Control.IxMonad.Update
                         Control.IxMonad.Vector
                         
   build-depends:        base < 5,
-                        ghc-prim, 
-                        HList >= 0.3
+                        ghc-prim
