@@ -13,9 +13,9 @@ instance Monoid Int where
 
 test :: Writer '["x" :-> Int, "y" :-> String] ()
 test = do -- ...
-          put (Proxy::(Proxy "x")) (42::Int)
+          put (Var::(Var "x")) (42::Int)
           -- ...
-          put (Proxy::(Proxy "y")) "hello"
+          put (Var::(Var "y")) "hello"
           -- .....
-          put (Proxy::(Proxy "x")) (58::Int) -- update to 'x'
+          put (Var::(Var "x")) (58::Int) -- update to 'x'
 

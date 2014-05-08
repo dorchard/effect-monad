@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs, DataKinds, KindSignatures, TypeOperators, TypeFamilies, 
              MultiParamTypeClasses, FlexibleInstances, UndecidableInstances #-}
 
-module Control.IxMonad.Writer(Writer(..), Proxy(..), Symbol, put, (:->), Set(..), union) where
+module Control.IxMonad.Writer(Writer(..), Proxy(..), Symbol, put, (:->), Set(..), union, Var(..)) where
 
 import Control.IxMonad 
 import Control.IxMonad.Helpers.Set
@@ -19,6 +19,6 @@ instance IxMonad Writer where
     (Writer (a, w)) >>= k = let Writer (b, w') = k a
                             in  Writer (b, w `union` w')
 
-put :: Proxy (k :: Symbol) -> v -> Writer '[k :-> v] ()
+put :: Var k -> v -> Writer '[k :-> v] ()
 put k v = Writer ((), Ext k v Empty)
 

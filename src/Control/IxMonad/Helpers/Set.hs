@@ -4,25 +4,25 @@
              IncoherentInstances #-}
 
 module Control.IxMonad.Helpers.Set (Set(..), Proxy(..), Union, Unionable, (:->), 
-                                       Symbol, union) where
+                                       Symbol, union, Var(..)) where
 
 import GHC.TypeLits
 import Data.Proxy
 import Data.Monoid
 
-data Pair (k :: Symbol) (v :: *) 
+data (k :: Symbol) :-> (v :: *) 
 
-type a :-> b = Pair a b
+data Var (k :: Symbol) = Var
 
 data Set (n :: [*]) where
     Empty :: Set '[]
-    Ext :: Proxy (k :: Symbol) -> v -> Set s -> Set ((k :-> v) ': s)
+    Ext :: Var k -> v -> Set s -> Set ((k :-> v) ': s)
 
 instance Show (Set '[]) where
     show Empty = "{}"
 
-instance (Show (Proxy k), Show v, Show' (Set s)) => 
-           Show (Set ((Pair k v) ': s)) where
+instance (Show (Var k), Show v, Show' (Set s)) => 
+           Show (Set ((k :-> v) ': s)) where
     show (Ext k v s) = "{(" ++ show k ++ ", " ++ show v ++ ")" ++ (show' s) ++ "}" 
 
 class Show' t where
@@ -31,14 +31,14 @@ class Show' t where
 instance Show' (Set '[]) where
     show' Empty = ""
 
-instance (Show' (Set s), Show (Proxy k), Show v) => Show' (Set ((k :-> v) ': s)) where
+instance (Show' (Set s), Show (Var k), Show v) => Show' (Set ((k :-> v) ': s)) where
     show' (Ext k v s) = ", (" ++ show k ++ ", " ++ show v ++ ")" ++ (show' s) 
 
 -- Type-level set disjoint-union 
 
 type family DisjUnion (s :: [*]) (t :: [*]) :: [*]
 type instance DisjUnion '[] t = t
-type instance DisjUnion ((k :-> v) ': xs) ys = (Pair k v) ': (DisjUnion xs ys)
+type instance DisjUnion ((k :-> v) ': xs) ys = (k :-> v) ': (DisjUnion xs ys)
 
 -- Value-level set disjoint union
 
@@ -124,18 +124,18 @@ instance Bubbler1 '[(k :-> v)] where
 instance (Bubbler1 (((MaxKey j k j k) :-> (MaxKey j k u v)) ': s), Chooser (CmpSymbol j k))=>
              Bubbler1 ((j :-> u) ': (k :-> v) ': s) where 
 
-    bubble1 (Ext _ u (Ext _ v s)) = Ext Proxy (minkey (Proxy::(Proxy j)) (Proxy::(Proxy k)) u v)
-                                         (bubble1 (Ext (Proxy::(Proxy (MaxKey j k j k))) (maxkey (Proxy::(Proxy j)) (Proxy::(Proxy k)) u v) s))
+    bubble1 (Ext _ u (Ext _ v s)) = Ext Var (minkey (Var::(Var j)) (Var::(Var k)) u v)
+                                         (bubble1 (Ext (Var::(Var (MaxKey j k j k))) (maxkey (Var::(Var j)) (Var::(Var k)) u v) s))
 
 
 minkey :: forall j k a b . 
           (Chooser (CmpSymbol j k)) => 
-          Proxy j -> Proxy k -> a -> b -> MinKey j k a b
+          Var j -> Var k -> a -> b -> MinKey j k a b
 minkey _ _ x y = choose (Proxy::(Proxy (CmpSymbol j k))) x y 
 
 maxkey :: forall j k a b . 
           (Chooser (CmpSymbol j k)) => 
-          Proxy j -> Proxy k -> a -> b -> MaxKey j k a b 
+          Var j -> Var k -> a -> b -> MaxKey j k a b 
 maxkey _ _ a b = choose (Proxy::(Proxy (CmpSymbol j k))) b a
 
 -- Return the minimum or maximum of two types which consistitue key-value pairs
