@@ -10,13 +10,13 @@ import GHC.TypeLits
 import Data.Proxy
 import Data.Monoid
 
-data (k :: Symbol) :-> (v :: *) 
+data (k :: Symbol) :-> (v :: *) = (Var k) :->  v
 
 data Var (k :: Symbol) = Var
 
 data Set (n :: [*]) where
     Empty :: Set '[]
-    Ext :: Var k -> v -> Set s -> Set ((k :-> v) ': s)
+    Ext :: e -> Set s -> Set (e ': s)
 
 -- ****** Type level *******
 
@@ -27,10 +27,14 @@ type instance DisjUnion '[] t = t
 type instance DisjUnion (x ': xs) ys = x ': (DisjUnion xs ys)
 
 type family RemDups t where
-    RemDups '[]                 = '[]
-    RemDups '[k :-> v]          = '[k :-> v]
-    RemDups ((k :-> u) ': (k :-> u) ': s) = RemDups ((k :-> u) ':s)
-    RemDups ((k :-> v) ': (j :-> u) ': s) = (k :-> v) ': (RemDups ((j :-> u) ': s))
+    RemDups '[]           = '[]
+    RemDups '[e]          = '[e]
+    RemDups (e ': e ': s) = RemDups (e ': s)
+    RemDups (e ': f ': s) = e ': RemDups (f ': s)
+
+
+--    RemDups ((k :-> u) ': (k :-> u) ': s) = RemDups ((k :-> u) ':s)
+--    RemDups ((k :-> v) ': (j :-> u) ': s) = (k :-> v) ': (RemDups ((j :-> u) ': s))
 
 type Union s t = RemDups (Sort (DisjUnion s t))
 
@@ -48,16 +52,16 @@ type family Bubble l l' where
 
 -- Type-level bubble sort on list
 type family Pass (l :: [*]) :: [*]
-type instance Pass '[]                 = '[]
-type instance Pass '[k :-> v]          = '[k :-> v]
+type instance Pass '[]           = '[]
+type instance Pass '[e]          = '[e]
 type instance Pass ((j :-> u) ': ((k :-> v) ': s)) = 
                        ((MinBy j k j k) :-> (MinBy j k u v)) ': 
                            Pass (((MaxBy j k j k) :-> (MaxBy j k u v)) ': s)
 
 
 -- Return the minimum or maximum of two types which consistitue key-value pairs
-type MinBy (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = Choose (CmpSymbol a b) p q
-type MaxBy (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = Choose (CmpSymbol a b) q p
+type MinBy (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = ((Choose (CmpSymbol a b) p q) :: k)
+type MaxBy (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = ((Choose (CmpSymbol a b) q p) :: k)
 
 type family Choose (g :: Ordering) a b where
     Choose LT p q = p
@@ -73,7 +77,7 @@ instance Show (Set '[]) where
 
 instance (Show (Var k), Show v, Show' (Set s)) => 
            Show (Set ((k :-> v) ': s)) where
-    show (Ext k v s) = "{(" ++ show k ++ ", " ++ show v ++ ")" ++ (show' s) ++ "}" 
+    show (Ext (k :-> v) s) = "{(" ++ show k ++ ", " ++ show v ++ ")" ++ (show' s) ++ "}" 
 
 class Show' t where
     show' :: t -> String
@@ -82,7 +86,7 @@ instance Show' (Set '[]) where
     show' Empty = ""
 
 instance (Show' (Set s), Show (Var k), Show v) => Show' (Set ((k :-> v) ': s)) where
-    show' (Ext k v s) = ", (" ++ show k ++ ", " ++ show v ++ ")" ++ (show' s) 
+    show' (Ext (k :-> v) s) = ", (" ++ show k ++ ", " ++ show v ++ ")" ++ (show' s) 
 
 
 
@@ -90,7 +94,7 @@ instance (Show' (Set s), Show (Var k), Show v) => Show' (Set ((k :-> v) ': s)) w
 
 disjunion :: Set s -> Set t -> Set (DisjUnion s t)
 disjunion Empty x = x
-disjunion (Ext k v xs) ys = Ext k v (disjunion xs ys)
+disjunion (Ext e xs) ys = Ext e (disjunion xs ys)
 
 
 -- Removing of duplicates from the set representation
@@ -102,13 +106,13 @@ instance RemDuper '[] '[] where
     remDup Empty = Empty
 
 instance RemDuper '[k :-> v] '[k :-> v] where
-    remDup (Ext k v Empty) = Ext k v Empty
+    remDup (Ext (k :-> v) Empty) = Ext (k :-> v) Empty
 
 instance (Monoid u, RemDuper ((k :-> u) ': s) s') => RemDuper ((k :-> u) ': (k :-> u) ': s) s' where
-    remDup (Ext _ u (Ext k v s)) = remDup (Ext k (u `mappend` v) s)
+    remDup (Ext (_ :-> u) (Ext (k :-> v) s)) = remDup (Ext (k :-> (u `mappend` v)) s)
 
 instance RemDuper ((j :-> u) ': s) s' => RemDuper ((k :-> v) ': (j :-> u) ': s) ((k :-> v) ': s') where
-    remDup (Ext k v (Ext j u s)) = Ext k v (remDup (Ext j u s))
+    remDup (Ext (k :-> v) (Ext (j :-> u) s)) = Ext (k :-> v) (remDup (Ext (j :-> u) s))
 
 -- Set union
 
@@ -121,8 +125,8 @@ class Bubbler s s' where
 instance Bubbler s '[] where
     bubble s Empty = s
 
-instance (Bubbler s t, Bubbler1 (Bubble s t)) => Bubbler s ((k :-> v) ': t) where
-    bubble s (Ext _ _ t) = bubble1 (bubble s t)
+instance (Bubbler s t, Bubbler1 (Bubble s t)) => Bubbler s (e ': t) where
+    bubble s (Ext _ t) = bubble1 (bubble s t)
 
 bsort :: (Bubbler s s) => Set s -> Set (Sort s)
 bsort x = bubble x x
@@ -133,14 +137,14 @@ class Bubbler1 s where
 instance Bubbler1 '[] where
     bubble1 Empty = Empty
 
-instance Bubbler1 '[(k :-> v)] where
-    bubble1 (Ext k v Empty) = Ext k v Empty
+instance Bubbler1 e where
+    bubble1 (Ext e Empty) = Ext e Empty
 
 instance (Bubbler1 (((MaxBy j k j k) :-> (MaxBy j k u v)) ': s), Chooser (CmpSymbol j k))=>
              Bubbler1 ((j :-> u) ': (k :-> v) ': s) where 
 
-    bubble1 (Ext _ u (Ext _ v s)) = Ext Var (minkey (Var::(Var j)) (Var::(Var k)) u v)
-                                         (bubble1 (Ext (Var::(Var (MaxBy j k j k))) (maxkey (Var::(Var j)) (Var::(Var k)) u v) s))
+    bubble1 (Ext (_ :-> u) (Ext (_ :-> v) s)) = Ext (Var :-> (minkey (Var::(Var j)) (Var::(Var k)) u v))
+                                         (bubble1 (Ext ((Var::(Var (MaxBy j k j k))) :-> (maxkey (Var::(Var j)) (Var::(Var k)) u v)) s))
 
 
 minkey :: forall j k a b . 
