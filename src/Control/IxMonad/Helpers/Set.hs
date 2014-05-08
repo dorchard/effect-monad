@@ -32,10 +32,6 @@ type family RemDups t where
     RemDups (e ': e ': s) = RemDups (e ': s)
     RemDups (e ': f ': s) = e ': RemDups (f ': s)
 
-
---    RemDups ((k :-> u) ': (k :-> u) ': s) = RemDups ((k :-> u) ':s)
---    RemDups ((k :-> v) ': (j :-> u) ': s) = (k :-> v) ': (RemDups ((j :-> u) ': s))
-
 type Union s t = RemDups (Sort (DisjUnion s t))
 
 type Unionable s t = (Sortable (DisjUnion s t), RemDuper (Sort (DisjUnion s t)) (RemDups (Sort (DisjUnion s t))))
