@@ -2,7 +2,8 @@
              MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, 
              ScopedTypeVariables, PolyKinds, FlexibleContexts, InstanceSigs #-}
 
-module Control.IxMonad.Writer(Writer(..), Symbol, put, (:->), Set(..), union, Var(..)) where
+module Control.IxMonad.Writer(Writer(..), Symbol, put, (:->), Set(..), union, Var(..), 
+                              Union, Unionable) where
 
 import Control.IxMonad 
 import Control.IxMonad.Helpers.Mapping
@@ -13,6 +14,8 @@ import GHC.TypeLits
 import Prelude hiding (Monad(..))
 
 data Writer w a = Writer { runWriter :: (a, Set w) } 
+
+{-- Writer effect-parameterised monad -}
 
 instance IxMonad Writer where
     type Inv Writer s t = Unionable s t
@@ -28,13 +31,17 @@ put :: Var k -> v -> Writer '[k :-> v] ()
 put k v = Writer ((), Ext (k :-> v) Empty)
 
 
+{-- Define the operation for removing duplicates using mappend --}
+
 instance (Monoid u, RemDuper ((k :-> u) ': s) s') => RemDuper ((k :-> u) ': (k :-> u) ': s) s' where
     remDup (Ext (_ :-> u) (Ext (k :-> v) s)) = remDup (Ext (k :-> (u `mappend` v)) s)
+
+{-- Extend the bubble sort for the Set -}
 
 type instance Min (j :-> u) (k :-> v) = (Select j k j k) :-> (Select j k u v)
 type instance Max (j :-> u) (k :-> v) = (Select j k k j) :-> (Select j k v u)
 
-type Select (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = ((Choose (CmpSymbol a b) p q) :: k)
+type Select a b p q = Choose (CmpSymbol a b) p q
 
 class Chooser (o :: Ordering) where
     type Choose (o :: Ordering) (p :: k) (q :: k) :: k

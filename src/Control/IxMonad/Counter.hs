@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators #-}
 
-module Control.IxMonad.Counter(Z, S, Counter, one, (:+)) where
+module Control.IxMonad.Counter(Z, S, Counter, tick, (:+)) where
 
 import Control.IxMonad
 import Prelude hiding (Monad(..))
@@ -21,5 +21,5 @@ instance IxMonad Counter where
     return a = Counter a
     (Counter a) >>= k = Counter . forget $ k a
 
-one :: a -> Counter (S Z) a
-one x = Counter x
+tick :: a -> Counter (S Z) a
+tick x = Counter x

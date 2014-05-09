@@ -3,7 +3,7 @@
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union,
-                                    RemDuper(..), OrdH(..), Min, Max) where
+                                    RemDuper(..), OrdH(..), Min, Max, Append(..)) where
 
 {- Core Set definition, in terms of lists -}
 

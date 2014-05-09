@@ -7,6 +7,7 @@
 module Control.IxMonad.State where
 
 import Control.IxMonad
+-- import Control.IxMonad.Helpers.Set
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy

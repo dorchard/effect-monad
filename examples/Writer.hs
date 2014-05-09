@@ -1,4 +1,6 @@
-{-# LANGUAGE DataKinds, KindSignatures, TypeOperators, RebindableSyntax, FlexibleInstances #-}
+{-# LANGUAGE DataKinds, KindSignatures, TypeOperators, RebindableSyntax, FlexibleInstances, 
+             ConstraintKinds, FlexibleContexts 
+  #-}
 
 import Control.IxMonad
 import Control.IxMonad.Writer
@@ -24,3 +26,14 @@ instance Show (Var "x") where
 
 instance Show (Var "y") where
     show _ = "y"
+
+foo :: (Unionable f '["x" :-> Int], Num a) => 
+       (a -> Writer f t) -> Writer (Union f '["x" :-> Int]) ()
+foo f = do y <- f 3
+           put (Var::(Var "x")) (42::Int)
+
+foo2 :: (Unionable f '["x" :-> Int, "y" :-> t], Num a) => 
+       (a -> Writer f t) -> Writer (Union f '["x" :-> Int, "y" :-> t]) ()
+foo2 f = do y <- f 3
+            put (Var::(Var "x")) (42::Int)
+            put (Var::(Var "y")) y
