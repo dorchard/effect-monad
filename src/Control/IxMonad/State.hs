@@ -7,7 +7,8 @@
 module Control.IxMonad.State where
 
 import Control.IxMonad
--- import Control.IxMonad.Helpers.Set
+import Control.IxMonad.Mapping (Var(..))
+import Control.IxMonad.Helpers.Set
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
@@ -16,22 +17,8 @@ import Debug.Trace
 -- Distinguish reads, writes, and read-writes
 data Sort = R | W | RW
 
--- Type-level set representation as a list of triples
-data Nil
-data Cons (k :: Symbol) (s :: Sort) (v :: *) (xs :: *)
-
-data List n where
-    Nil :: List Nil
-    Cons :: Proxy (k :: Symbol) -> Proxy (s :: Sort) -> v -> List xs -> List (Cons k s v xs)
-
--- Printing 
-instance Show (List Nil) where
-    show Nil = "Nil"
-instance (ShowMore (Proxy k), 
-          ShowMore (Proxy s), Show v, Show (List xs)) => Show (List (Cons k s v xs)) where
-    show (Cons k s v xs) = "Cons " ++ (showM k) ++ " " ++ (showM s) ++ " " ++ (show v) ++ " " ++ show xs
-
 -- Mostly used for debugging
+{-
 class ShowMore t where
     showM :: t -> String
 instance ShowMore (Proxy R) where
@@ -40,30 +27,11 @@ instance ShowMore (Proxy W) where
     showM _ = "W"
 instance ShowMore (Proxy RW) where
     showM _ = "RW"
-instance ShowMore (Proxy "x") where
-    showM _ = "x"
-instance ShowMore (Proxy "y") where
-    showM _ = "y"
+-}
 
--- Type-level list append
-type family Append s t where
-       Append Nil t = t
-       Append (Cons k s x xs) ys = Cons k s x (Append xs ys)
+data (k :: Symbol) :~> (s :: Sort) (a :: *) = (:~>) (Var k) 
 
-append :: List s -> List t -> List (Append s t)
-append Nil x = x
-append (Cons k s x xs) ys = Cons k s x (append xs ys)
-
--- Type-level set union
---    implemented using lists, with a canonical ordering and duplicates removed
---    and turning of 'R' and 'W' on the same key into 'RW'
-
-type Unionable s t = RemDuper (BSort (Append s t)) (Union s t)
-
-type family Union s t where Union s t = RemDup (BSort (Append s t))
-
-union :: (Sortable (Append s t), RemDuper (BSort (Append s t)) (RemDup (BSort (Append s t)))) => List s -> List t -> List (Union s t)
-union s t = remDup (bsort (append s t))
+type UnionState s t = RemDupState (Sort (Append s t))
 
 -- Remove duplicates from a type-level list and turn different sorts into 'RW'
 type family RemDup t where
