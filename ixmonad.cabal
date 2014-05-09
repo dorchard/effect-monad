@@ -38,6 +38,7 @@ library
                         Control.IxMonad.WriteOnceWriter
                         Control.IxMonad.Writer
                         Control.IxMonad.Helpers.List
+                        Control.IxMonad.Helpers.Mapping
                         Control.IxMonad.Helpers.Set
                         
   build-depends:        base < 5,
