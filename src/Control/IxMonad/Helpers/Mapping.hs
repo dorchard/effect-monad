@@ -1,8 +1,9 @@
 {-# LANGUAGE TypeOperators, DataKinds, FlexibleContexts, KindSignatures, PolyKinds, 
-  ScopedTypeVariables, TypeFamilies, GADTs #-}
+  ScopedTypeVariables, TypeFamilies, GADTs, MultiParamTypeClasses, UndecidableInstances #-}
 
 module Control.IxMonad.Helpers.Mapping where
 
+import Control.IxMonad.Helpers.Set
 import GHC.TypeLits
 import Data.Proxy
 
@@ -40,3 +41,12 @@ instance Chooser GT where
 select :: forall j k a b . (Chooser (CmpSymbol j k)) => 
           Var j -> Var k -> a -> b -> Select j k a b
 select _ _ x y = choose (Proxy::(Proxy (CmpSymbol j k))) x y 
+
+
+type instance Min (j :-> u) (k :-> v) = (Select j k j k) :-> (Select j k u v)
+type instance Max (j :-> u) (k :-> v) = (Select j k k j) :-> (Select j k v u)
+
+instance (Chooser (CmpSymbol j k)) => OrdH (j :-> u) (k :-> v) where
+    minH (j :-> u) (k :-> v) = Var :-> (select j k u v)
+    maxH (j :-> u) (k :-> v) = Var :-> (select j k v u)
+

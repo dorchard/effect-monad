@@ -110,12 +110,6 @@ type Intersectable s t = (Sortable (Append s t), UpdateReads (Sort (Append s t))
 intersectReads :: (Sortable (Append s t), Intersectable s t) => Set s -> Set t -> Set t
 intersectReads s t = updateReads (bsort (append s t))
 
-type instance Min (j :-> a :! f) (k :-> b :! g) = (Select j k j k) :-> (Select j k a b) :! (Select j k f g)
-type instance Max (j :-> a :! f) (k :-> b :! g) = (Select j k k j) :-> (Select j k b a) :! (Select j k g f)
-
-instance (Chooser (CmpSymbol j k)) => OrdH (j :-> a :! f) (k :-> b :! g) where
-    minH (j :-> a :! f) (k :-> b :! g) = Var :-> (select j k a b) :! Eff
-    maxH (j :-> a :! f) (k :-> b :! g) = Var :-> (select j k b a) :! Eff
 
 -- Indexed state type
 data IxState s a = IxS { runState :: Set (Reads s) -> (a, (Set (Writes s))) }

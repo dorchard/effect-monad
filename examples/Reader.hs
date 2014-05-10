@@ -1,4 +1,4 @@
-{-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction, DataKinds #-}
+{-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction, DataKinds, TypeOperators #-}
 
 import Prelude hiding (Monad(..))
 import Control.IxMonad
@@ -9,9 +9,9 @@ import Data.Proxy
 
 {- Examples -}
 
-foo :: IxReader (Cons "x" a (Cons "xs" [a] Nil)) [a]
-foo = do x <- ask (Proxy::(Proxy "x"))
-         xs <- ask (Proxy::(Proxy "xs"))
+foo :: IxReader '["x" :-> a, "xs" :-> [a]] [a]
+foo = do x <- ask (Var::(Var "x"))
+         xs <- ask (Var::(Var "xs"))
          return (x:xs)
 
--- (unIxR foo) (Cons Proxy 1 (Cons Proxy [2,3] Nil))
+runFoo = runReader foo (Ext (Var :-> 1) (Ext (Var :-> [2, 3]) Empty))
