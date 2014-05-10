@@ -41,28 +41,7 @@ instance (Monoid u, RemDuper ((k :-> u) ': s) s') => RemDuper ((k :-> u) ': (k :
 type instance Min (j :-> u) (k :-> v) = (Select j k j k) :-> (Select j k u v)
 type instance Max (j :-> u) (k :-> v) = (Select j k k j) :-> (Select j k v u)
 
-type Select a b p q = Choose (CmpSymbol a b) p q
-
-class Chooser (o :: Ordering) where
-    type Choose (o :: Ordering) (p :: k) (q :: k) :: k
-    choose :: (Proxy o) -> p -> q -> (Choose o p q)
-
-instance Chooser LT where
-    type Choose LT p q = p
-    choose _ p q = p
-
-instance Chooser EQ where
-    type Choose EQ p q = p
-    choose _ p q = p
-
-instance Chooser GT where
-    type Choose GT p q = q
-    choose _ p q = q
-
 instance (Chooser (CmpSymbol j k)) => OrdH (j :-> u) (k :-> v) where
     minH (j :-> u) (k :-> v) = Var :-> (select j k u v)
     maxH (j :-> u) (k :-> v) = Var :-> (select j k v u)
 
-select :: forall j k a b . (Chooser (CmpSymbol j k)) => 
-          Var j -> Var k -> a -> b -> Select j k a b
-select _ _ x y = choose (Proxy::(Proxy (CmpSymbol j k))) x y 

@@ -4,309 +4,156 @@
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
              InstanceSigs, IncoherentInstances #-}
 
-module Control.IxMonad.State where
+module Control.IxMonad.State (Set(..),get,put,IxState(..),(:->)(..),(:!)(..),
+                                  Eff(..),Effect(..),Var(..)) where
 
 import Control.IxMonad
-import Control.IxMonad.Mapping (Var(..))
-import Control.IxMonad.Helpers.Set
+import Control.IxMonad.Helpers.Mapping 
+import Control.IxMonad.Helpers.Set hiding (Unionable, union)
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
 import Debug.Trace
 
 -- Distinguish reads, writes, and read-writes
-data Sort = R | W | RW
+data Eff = R | W | RW
 
--- Mostly used for debugging
-{-
-class ShowMore t where
-    showM :: t -> String
-instance ShowMore (Proxy R) where
-    showM _ = "R"
-instance ShowMore (Proxy W) where
-    showM _ = "W"
-instance ShowMore (Proxy RW) where
-    showM _ = "RW"
--}
+data Effect (s :: Eff) = Eff
 
-data (k :: Symbol) :~> (s :: Sort) (a :: *) = (:~>) (Var k) 
+instance Show (Effect R) where
+    show _ = "R"
+instance Show (Effect W) where
+    show _ = "W"
+instance Show (Effect RW) where
+    show _ = "RW"
 
-type UnionState s t = RemDupState (Sort (Append s t))
+data (:!) (a :: *) (s :: Eff) = a :! (Effect s) 
+
+instance (Show (Effect f), Show a) => Show (a :! f) where
+    show (a :! f) = show a ++ " ! " ++ show f
+
+infixl 3 :!
+
+type UnionS s t = RemDupState (Sort (Append s t))
+type Unionable s t = (Sortable (Append s t), RemDuperS (Sort (Append s t)) (RemDupState (Sort (Append s t))))
+
+union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
+union s t = remDupState (bsort (append s t))
 
 -- Remove duplicates from a type-level list and turn different sorts into 'RW'
-type family RemDup t where
-            RemDup Nil                        = Nil
-            RemDup (Cons k s a  Nil)          = Cons k s a Nil
-            RemDup (Cons k s a (Cons k s b as)) = RemDup (Cons k s b as)
-            RemDup (Cons k s a (Cons k t a as)) = RemDup (Cons k RW a as)
-            RemDup (Cons k s a (Cons j t b as)) = Cons k s a (RemDup (Cons j t b as))
-
-class RemDuper t v where
-    remDup :: List t -> List v
-instance RemDuper Nil Nil where
-    remDup Nil = Nil
-instance RemDuper (Cons k s a Nil) (Cons k s a Nil) where
-    remDup (Cons k s a Nil) = (Cons k s a Nil)
-instance RemDuper (Cons k s b as) as' => RemDuper (Cons k s a (Cons k s b as)) as' where
-    remDup (Cons _ _ _ (Cons k s a xs)) = remDup (Cons k s a xs)
-instance RemDuper (Cons k RW b as) as' => RemDuper (Cons k s a (Cons k t b as)) as' where
-    remDup (Cons _ _ _ (Cons k _ a xs)) = remDup (Cons k (Proxy::(Proxy RW)) a xs)
-instance RemDuper (Cons j t b as) as' => RemDuper (Cons k s a (Cons j t b as)) (Cons k s a as') where
-    remDup (Cons k s a (Cons j t b xs)) = Cons k s a (remDup (Cons j t b xs))
-
--- Replaces reads with writes
-type family IntrDup t where
-            IntrDup Nil                        = Nil
-            IntrDup (Cons k W a  Nil)          = Nil
-            IntrDup (Cons k s a  Nil)          = Cons k s a Nil
-            IntrDup (Cons k s a (Cons k s b as)) = IntrDup (Cons k R b as)
-
-            IntrDup (Cons k W a (Cons k R b as)) = IntrDup (Cons k R a as)
-            IntrDup (Cons k R a (Cons k W b as)) = IntrDup (Cons k R b as)
-
-            IntrDup (Cons k RW a (Cons k R b as)) = IntrDup (Cons k R a as)
-            IntrDup (Cons k R a (Cons k RW b as)) = IntrDup (Cons k R b as)
+type family RemDupState t where
+            RemDupState '[]       = '[]
+            RemDupState '[e]      = '[e]
+            RemDupState ((k :-> a :! s) ': (k :-> b :! s) ': as) = RemDupState ((k :-> b :! s) ': as)
+            RemDupState ((k :-> a :! s) ': (k :-> a :! t) ': as) = RemDupState ((k :-> a :! RW) ': as)
+            RemDupState ((k :-> a :! s) ': (j :-> b :! t) ': as) = (k :-> a :! s) ': RemDupState ((j :-> b :! t) ': as)
 
 
-            IntrDup (Cons k W a (Cons j R b as)) = IntrDup (Cons j R b as)
-            IntrDup (Cons k R a (Cons j W b as)) = IntrDup (Cons k R a as)
-            IntrDup (Cons k W a (Cons j W b as)) = IntrDup as
-            IntrDup (Cons k R a (Cons j R b as)) = Cons k R a (IntrDup (Cons j R b as))
+class RemDuperS t v where
+    remDupState :: Set t -> Set v
 
-class IntrDuper t v where
-    intrDup :: List t -> List v
+instance RemDuperS '[] '[] where
+    remDupState Empty = Empty
 
-instance IntrDuper Nil Nil where
-    intrDup Nil = Nil
+instance RemDuperS '[e] '[e] where
+    remDupState (Ext e Empty) = (Ext e Empty)
 
-instance IntrDuper (Cons k W a Nil) Nil where
-    intrDup (Cons k s a Nil) = Nil
+instance RemDuperS ((k :-> b :! s) ': as) as' => 
+          RemDuperS ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
+    remDupState (Ext _ (Ext x xs)) = remDupState (Ext x xs)
 
-instance IntrDuper (Cons k s a Nil) (Cons k s a Nil) where
-    intrDup (Cons k s a Nil) = (Cons k s a Nil)
+instance RemDuperS ((k :-> a :! RW) ': as) as' => 
+           RemDuperS ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
+    remDupState (Ext _ (Ext (k :-> (a :! _)) xs)) = remDupState (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
 
-instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k R a (Cons k R b as)) as' where
-    intrDup (Cons _ _ _ (Cons k s a xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k W a (Cons k W b as)) as' where
-    intrDup (Cons _ _ _ (Cons k s a xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k RW a (Cons k RW b as)) as' where
-    intrDup (Cons _ _ _ (Cons k s a xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R a as) as' => IntrDuper (Cons k W a (Cons k R b as)) as' where
-    intrDup (Cons k _ a (Cons _ _ _ xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k R a (Cons k W b as)) as' where
-    intrDup (Cons _ _ _ (Cons k _ a xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R a as) as' => IntrDuper (Cons k RW a (Cons k R b as)) as' where
-    intrDup (Cons k _ a (Cons _ _ _ xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R b as) as' => IntrDuper (Cons k R a (Cons k RW b as)) as' where
-    intrDup (Cons _ _ _ (Cons k _ a xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons j R b as) as' => IntrDuper (Cons k W a (Cons j R b as)) as' where
-    intrDup (Cons _ _ _ (Cons k _ a xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper (Cons k R a as) as' => IntrDuper (Cons k R a (Cons j W b as)) as' where
-    intrDup (Cons k _ a (Cons _ _ _ xs)) = intrDup (Cons k (Proxy::(Proxy R)) a xs)
-
-instance IntrDuper as as' => IntrDuper (Cons k W a (Cons j W b as)) as' where
-    intrDup (Cons _ _ _ (Cons _ _ _ xs)) = intrDup xs
-
-instance IntrDuper (Cons j R b as) as' => 
-           IntrDuper (Cons k R a (Cons j R b as)) (Cons k R a as') where
-    intrDup (Cons k s a (Cons j t b xs)) = Cons k s a (intrDup (Cons j t b xs))
+instance RemDuperS ((j :-> b :! t) ': as) as' => 
+             RemDuperS ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
+    remDupState (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (remDupState (Ext (j :-> (b :! t)) xs))
 
 
-type family Intersect s t where Intersect s t = IntrDup (BSort (Append s t))
+class UpdateReads t v where
+    updateReads :: Set t -> Set v
 
-type Intersectable s t = IntrDuper (BSort (Append s t)) t
+instance UpdateReads '[] '[] where
+    updateReads Empty = Empty
 
-intersect :: (Sortable (Append s t), IntrDuper (BSort (Append s t)) (IntrDup (BSort (Append s t)))) => List s -> List t -> List (Intersect s t)
-intersect s t = intrDup (bsort (append s t))
+instance UpdateReads '[k :-> (a :! W)] '[] where
+    updateReads (Ext e Empty) = Empty
 
+instance UpdateReads '[e] '[e] where 
+    updateReads (Ext e Empty) = Ext e Empty
 
-type family BSort l where BSort l = Bubble l l
+instance UpdateReads ((k :-> b :! R) ': as) as' => UpdateReads ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
+    updateReads (Ext _ (Ext (k :-> (b :! _)) xs)) = updateReads (Ext (k :-> (b :! (Eff::(Effect R)))) xs)
 
-type family Bubble l l' where
-    Bubble l Nil = l
-    Bubble l (Cons k s a y) = BubbleOne (Bubble l y)
+instance UpdateReads ((k :-> a :! R) ': as) as' => UpdateReads ((k :-> a :! W) ': (k :-> b :! R) ': as) as' where
+    updateReads (Ext (k :-> (a :! _)) (Ext _ xs)) = updateReads (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
 
--- Type-level bubble sort on list
-type family BubbleOne l where
-            BubbleOne Nil                       = Nil
-            BubbleOne (Cons k s a Nil)          = Cons k s a Nil
-            BubbleOne (Cons j s a (Cons k t b xs)) = 
-                       Cons (MinKey j k j k)  (MinKey j k s t) (MinKey j k a b)
-                           (BubbleOne (Cons (MaxKey j k j k) (MaxKey j k s t) (MaxKey j k a b) xs))
+instance UpdateReads ((k :-> b :! R) ': as) as' => UpdateReads ((k :-> a :! s) ': (k :-> b :! W) ': as) as' where
+    updateReads (Ext _ (Ext (k :-> (b :! _)) xs)) = updateReads (Ext (k :-> (b :! (Eff::(Effect R)))) xs)
 
-type Sortable l = Bubbler l l
+instance UpdateReads ((k :-> a :! R) ': as) as' => UpdateReads ((k :-> a :! RW) ': (k :-> a :! R) ': as) as' where
+    updateReads (Ext (k :-> (a :! _)) (Ext _ xs)) = updateReads (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
 
-class Bubbler l l' where
-    bubble :: List l -> List l' -> List (Bubble l l')
+instance UpdateReads ((k :-> b :! R) ': as) as' => UpdateReads ((k :-> a :! R) ': (k :-> b :! RW) ': as) as' where
+    updateReads (Ext _ (Ext (k :-> (b :! _)) xs)) = updateReads (Ext (k :-> (b :! (Eff::(Effect R)))) xs)
 
-instance Bubbler l Nil where
-    bubble l Nil = l
+instance UpdateReads ((j :-> b :! s) ': as) as' => UpdateReads ((k :-> a :! W) ': (j :-> b :! s) ': as) as' where
+    updateReads (Ext _ (Ext e xs)) = updateReads (Ext e xs)
 
-instance (Bubbler l y, Bubbler1 (Bubble l y)) => Bubbler l (Cons k s a y) where
-    bubble l (Cons k s a y) = bubble1 (bubble l y)
-
-bsort :: (Bubbler l l) => List l -> List (BSort l)
-bsort x = bubble x x
-
-class Bubbler1 l where
-    bubble1 :: List l -> List (BubbleOne l)
-
-instance Bubbler1 Nil where
-    bubble1 Nil = Nil
-
-instance Bubbler1 (Cons k s a Nil) where
-    bubble1 (Cons k s a Nil) = Cons k s a Nil
-
-instance (Bubbler1 (Cons (MaxKey j k j k) (MaxKey j k s t) (MaxKey j k a b) 
-                   xs), Chooser (CmpSymbol j k))=>
-             Bubbler1 (Cons j s a (Cons k t b xs)) where 
-
- bubble1 (Cons _ _ a (Cons _ _ b xs)) = Cons Proxy Proxy (minkey (Proxy::(Proxy j)) (Proxy::(Proxy k)) a b) 
-                                         (bubble1 (Cons (Proxy::(Proxy (MaxKey j k j k))) (Proxy::(Proxy (MaxKey j k s t))) (maxkey (Proxy::(Proxy j)) (Proxy::(Proxy k)) a b) xs))
+instance UpdateReads ((j :-> b :! s) ': as) as' => UpdateReads ((k :-> a :! R) ': (j :-> b :! s) ': as) ((k :-> a :! R) ': as') where
+    updateReads (Ext e (Ext e' xs)) = Ext e $ updateReads (Ext e' xs)
 
 
-minkey :: forall j k a b . 
-          (Chooser (CmpSymbol j k)) => 
-          Proxy j -> Proxy k -> a -> b -> MinKey j k a b
-minkey _ _ x y = choose (Proxy::(Proxy (CmpSymbol j k))) x y 
+type Intersectable s t = (Sortable (Append s t), UpdateReads (Sort (Append s t)) t)
 
-maxkey :: forall j k a b . 
-          (Chooser (CmpSymbol j k)) => 
-          Proxy j -> Proxy k -> a -> b -> MaxKey j k a b 
-maxkey _ _ a b = choose (Proxy::(Proxy (CmpSymbol j k))) b a
+intersectReads :: (Sortable (Append s t), Intersectable s t) => Set s -> Set t -> Set t
+intersectReads s t = updateReads (bsort (append s t))
 
--- Return the minimum or maximum of two types which consistitue key-value pairs
-type MinKey (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = Choose (CmpSymbol a b) p q
-type MaxKey (a :: Symbol) (b :: Symbol) (p :: k) (q :: k) = Choose (CmpSymbol a b) q p
+type instance Min (j :-> a :! f) (k :-> b :! g) = (Select j k j k) :-> (Select j k a b) :! (Select j k f g)
+type instance Max (j :-> a :! f) (k :-> b :! g) = (Select j k k j) :-> (Select j k b a) :! (Select j k g f)
 
-class Chooser (o :: Ordering) where
-    choose :: (Proxy o) -> p -> q -> (Choose o p q)
-instance Chooser LT where
-    choose _ p q = p
-instance Chooser EQ where
-    choose _ p q = p
-instance Chooser GT where
-    choose _ p q = q
-
-type family Choose (g :: Ordering) a b where
-    Choose LT p q = p
-    Choose EQ p q = p
-    Choose GT p q = q
+instance (Chooser (CmpSymbol j k)) => OrdH (j :-> a :! f) (k :-> b :! g) where
+    minH (j :-> a :! f) (k :-> b :! g) = Var :-> (select j k a b) :! Eff
+    maxH (j :-> a :! f) (k :-> b :! g) = Var :-> (select j k b a) :! Eff
 
 -- Indexed state type
-data IxState s a = IxS { runIxState :: List (Reads s) -> (a, (List (Writes s))) }
+data IxState s a = IxS { runState :: Set (Reads s) -> (a, (Set (Writes s))) }
 
 type family Reads t where
-    Reads Nil = Nil
-    Reads (Cons k R a xs) = Cons k R a (Reads xs)
-    Reads (Cons k RW a xs) = Cons k R a (Reads xs)
-    Reads (Cons k s a xs) = Reads xs
-
-class Readers t where 
-    reads :: List t -> List (Reads t)
-instance Readers Nil where
-    reads Nil = Nil
-instance Readers xs => Readers (Cons k R a xs) where
-    reads (Cons k Proxy a xs) = Cons k Proxy a (reads xs)
-instance Readers xs => Readers (Cons k RW a xs) where
-    reads (Cons k Proxy a xs) = Cons k Proxy a (reads xs)
-instance Readers xs => Readers (Cons k W a xs) where
-    reads (Cons k Proxy a xs) = reads xs
+    Reads '[]                    = '[]
+    Reads ((k :-> a :! R) ': xs)  = (k :-> a :! R) ': (Reads xs)
+    Reads ((k :-> a :! RW) ': xs) = (k :-> a :! R) ': (Reads xs)
+    Reads ((k :-> a :! W) ': xs)  = Reads xs
 
 type family Writes t where
-    Writes Nil = Nil
-    Writes (Cons k W a xs) = Cons k W a (Writes xs)
-    Writes (Cons k RW a xs) = Cons k W a (Writes xs)
-    Writes (Cons k s a xs) = Writes xs
+    Writes '[]                     = '[]
+    Writes ((k :-> a :! W) ': xs)  = (k :-> a :! W) ': (Writes xs)
+    Writes ((k :-> a :! RW) ': xs) = (k :-> a :! W) ': (Writes xs)
+    Writes ((k :-> a :! R) ': xs)  = Writes xs
 
 -- 'ask' monadic primitive
 
-get :: Proxy (k::Symbol) -> IxState (Cons k R a Nil) a
-get Proxy = IxS $ \(Cons Proxy Proxy a Nil) -> (a, Nil)
+get :: Var (k::Symbol) -> IxState '[k :-> a :! R] a
+get _ = IxS $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
 
-put :: Proxy (k::Symbol) -> a -> IxState (Cons k W a Nil) ()
-put Proxy a = IxS $ \Nil -> ((), Cons Proxy Proxy a Nil)
+put :: Var (k::Symbol) -> a -> IxState '[k :-> a :! W] ()
+put _ a = IxS $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
 
 -- Indexed monad instance
 instance IxMonad IxState where
-    type Inv IxState s t = (Split (Reads s) (Reads t) (Reads (Reads (Union s t))), 
-                            Sortable (Append (Writes s) (Writes t)), 
-                            Sortable (Append (Writes s) (Reads t)), 
+    type Inv IxState s t = (Split (Reads s) (Reads t) (Reads (UnionS s t)), 
                             Unionable (Writes s) (Writes t), 
-                            Readers (Reads (Union s t)), 
                             Intersectable (Writes s) (Reads t), 
-                            Intersect (Writes s) (Reads t) ~ Reads t, 
-                            Writes (Union s t) ~ Union (Writes s) (Writes t))
-    type Unit IxState = Nil
-    type Plus IxState s t = Union s t
+                            Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
+    type Unit IxState = '[]
+    type Plus IxState s t = UnionS s t
 
-    return x = IxS $ \Nil -> (x, Nil)
+    return x = IxS $ \Empty -> (x, Empty)
 
-    (>>=) :: forall s a t b . Inv IxState s t => 
-             IxState s a -> (a -> IxState t b) -> IxState (Plus IxState s t) b
     (IxS e) >>= k = 
-        IxS $ \i -> 
-                  let (sR, tR) = (split (reads i)) ::(List (Reads s), List (Reads t))
-                      (a, sW)  = e sR
-                      (b, tW) = (runIxState $ k a) (sW `intersect` tR)
-                in (b, sW `union` tW) 
-
--- Split operation (with type level version)
-
-class Split s t z where
-   split :: List z -> (List s, List t)
-
-instance Split Nil Nil Nil where
-   split Nil = (Nil, Nil) 
-
-instance Split (Cons k s x xs) Nil (Cons k s x xs) where
-    split t = (t, Nil)
-
-instance Split Nil (Cons k s x xs) (Cons k s x xs) where
-   split t = (Nil, t)
-
-instance Split (Cons k s x Nil) (Cons k t x Nil) (Cons k r x Nil) where
-   split (Cons Proxy Proxy x Nil) = (Cons Proxy Proxy x Nil, Cons Proxy Proxy x Nil)
-
-instance Split xs ys zs => Split (Cons k s x xs) (Cons k s x ys) (Cons k s x zs) where
-   split (Cons k s x zs) = let (xs', ys') = split zs
-                           in (Cons k s x xs', Cons k s x ys')
-
-instance (Split xs ys zs) => Split (Cons j s x xs) (Cons k t y ys) (Cons j s' x (Cons k t' y zs)) where
-   split (Cons j s x (Cons k t y zs)) = let (xs', ys') = split zs
-                                        in (Cons j Proxy x xs', Cons k Proxy y ys')
-
-instance (Split xs ys zs) => Split (Cons j s x xs) (Cons k t y ys) (Cons k t' y (Cons j s' x zs)) where
-   split (Cons j s x (Cons k t y zs)) = let (xs', ys') = split zs
-                                        in (Cons k Proxy y xs', Cons j Proxy x ys')
-
-
-foo :: IxState (Cons "x" R Int (Cons "y" RW [Int] Nil)) [Int]
-foo = do x <- get (Proxy::(Proxy "x"))
-         y <- get (Proxy::(Proxy "y"))
-         put (Proxy::(Proxy "y")) (x:y)
-         z <- get (Proxy::(Proxy "y"))
-         return (x:z)
-
-foo_run = runIxState foo (Cons x r 1 (Cons y r [2,3] Nil))
-
-foo2 :: IxState (Cons "x" RW Int Nil) Int
-foo2 = do x <- get (Proxy::(Proxy "x"))
-          put (Proxy::(Proxy "x")) (x+1)
-          return x
-
-foo2_run = (runIxState foo2) (Cons x r 10 Nil)
-
-x = Proxy::(Proxy "x")
-y = Proxy::(Proxy "y")
-r = Proxy::(Proxy R)
-w = Proxy::(Proxy W)
+        IxS $ \i -> let (sR, tR) = split i
+                        (a, sW)  = e sR
+                        (b, tW) = (runState $ k a) (sW `intersectReads` tR)
+                    in  (b, sW `union` tW) 

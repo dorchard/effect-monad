@@ -2,8 +2,8 @@
              MultiParamTypeClasses, FlexibleInstances, PolyKinds, FlexibleContexts,
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
-module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union,
-                                    RemDuper(..), OrdH(..), Min, Max, Append(..)) where
+module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
+                                    RemDuper(..), OrdH(..), Min, Max, Append(..), Split(..)) where
 
 {- Core Set definition, in terms of lists -}
 
@@ -115,3 +115,32 @@ instance Show' (Set '[]) where
     show' Empty = ""
 instance (Show' (Set s), Show e) => Show' (Set (e ': s)) where
     show' (Ext e s) = ", " ++ show e ++ (show' s) 
+
+
+-- Split operation (with type level version)
+
+class Split s t z where
+   split :: Set z -> (Set s, Set t)
+
+instance Split '[] '[] '[] where
+   split Empty = (Empty, Empty)
+
+instance Split (x ': xs) '[] (x ': xs) where
+    split t = (t, Empty)
+
+instance Split '[] (x ': xs) (x ': xs) where
+   split t = (Empty, t)
+
+instance Split xs ys zs => Split (e ': xs) (e ': ys) (e ': zs) where
+   split (Ext e zs) = let (xs', ys') = split zs
+                      in (Ext e xs', Ext e ys')
+
+instance (Split xs ys zs) => 
+          Split (x ': xs) (y ': ys) (x ': y ': zs) where
+   split (Ext x (Ext y zs)) = let (xs', ys') = split zs
+                              in (Ext x xs', Ext y ys')
+
+instance (Split xs ys zs) => Split (x ': xs) (y ': ys) (y ': x ': zs) where
+   split (Ext x (Ext y zs)) = let (ys', xs') = split zs
+                              in (Ext y ys', Ext x xs')
+

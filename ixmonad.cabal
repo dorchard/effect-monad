@@ -27,7 +27,6 @@ library
   exposed-modules:      Control.IxMonad
                         Control.IxMonad.Cond
                         Control.IxMonad.Counter
-                        Control.IxMonad.CounterNat
                         Control.IxMonad.Maybe
                         Control.IxMonad.Monad
                         Control.IxMonad.Reader
