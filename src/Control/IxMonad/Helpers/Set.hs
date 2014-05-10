@@ -105,7 +105,6 @@ class OrdH e f where
 
 instance Show (Set '[]) where
     show Empty = "{}"
-
 instance (Show e, Show' (Set s)) => Show (Set (e ': s)) where
     show (Ext e s) = "{" ++ show e ++ (show' s) ++ "}" 
 
@@ -114,8 +113,7 @@ class Show' t where
 instance Show' (Set '[]) where
     show' Empty = ""
 instance (Show' (Set s), Show e) => Show' (Set (e ': s)) where
-    show' (Ext e s) = ", " ++ show e ++ (show' s) 
-
+    show' (Ext e s) = ", " ++ show e ++ (show' s)
 
 -- Split operation (with type level version)
 
@@ -124,12 +122,6 @@ class Split f g fg where
 
 instance Split '[] '[] '[] where
    split Empty = (Empty, Empty)
-
-instance Split (x ': xs) '[] (x ': xs) where
-    split s = (s, Empty)
-
-instance Split '[] (x ': xs) (x ': xs) where
-   split s = (Empty, s)
 
 instance Split xs ys zs => Split (e ': xs) (e ': ys) (e ': zs) where
    split (Ext e zs) = let (xs', ys') = split zs
