@@ -4,8 +4,8 @@
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
              InstanceSigs, IncoherentInstances #-}
 
-module Control.IxMonad.State (Set(..),get,put,IxState(..),(:->)(..),(:!)(..),
-                                  Eff(..),Effect(..),Var(..)) where
+module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..),
+                                  Eff(..), Effect(..), Var(..), union) where
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 

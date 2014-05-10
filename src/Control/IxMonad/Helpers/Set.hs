@@ -86,7 +86,7 @@ class Passer s where
 instance Passer '[] where
     pass Empty = Empty
 
-instance Passer e where
+instance Passer '[e] where
     pass (Ext e Empty) = Ext e Empty
 
 instance (Passer ((Max e f) ': s), OrdH e f)=> Passer (e ': f ': s) where 
@@ -119,28 +119,27 @@ instance (Show' (Set s), Show e) => Show' (Set (e ': s)) where
 
 -- Split operation (with type level version)
 
-class Split s t z where
-   split :: Set z -> (Set s, Set t)
+class Split f g fg where
+   split :: Set fg -> (Set f, Set g)
 
 instance Split '[] '[] '[] where
    split Empty = (Empty, Empty)
 
 instance Split (x ': xs) '[] (x ': xs) where
-    split t = (t, Empty)
+    split s = (s, Empty)
 
 instance Split '[] (x ': xs) (x ': xs) where
-   split t = (Empty, t)
+   split s = (Empty, s)
 
 instance Split xs ys zs => Split (e ': xs) (e ': ys) (e ': zs) where
    split (Ext e zs) = let (xs', ys') = split zs
                       in (Ext e xs', Ext e ys')
 
-instance (Split xs ys zs) => 
-          Split (x ': xs) (y ': ys) (x ': y ': zs) where
-   split (Ext x (Ext y zs)) = let (xs', ys') = split zs
-                              in (Ext x xs', Ext y ys')
+instance (Split xs ys zs) => Split (x ': xs) ys (x ': zs) where
+   split (Ext x zs) = let (xs, ys) = split zs
+                      in  (Ext x xs, ys) 
 
-instance (Split xs ys zs) => Split (x ': xs) (y ': ys) (y ': x ': zs) where
-   split (Ext x (Ext y zs)) = let (ys', xs') = split zs
-                              in (Ext y ys', Ext x xs')
+instance (Split xs ys zs) => Split xs (y ': ys) (y ': zs) where
+   split (Ext y zs) = let (xs, ys) = split zs
+                      in  (xs, Ext y ys) 
 
