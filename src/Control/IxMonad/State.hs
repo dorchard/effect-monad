@@ -5,7 +5,8 @@
              InstanceSigs, IncoherentInstances #-}
 
 module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..),
-                                  Eff(..), Effect(..), Var(..), union) where
+                                  Eff(..), Effect(..), Var(..), union, UnionS, 
+                                     Reads(..), Writes(..), Unionable, Sortable, Intersectable) where
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 
@@ -104,14 +105,13 @@ instance UpdateReads ((j :-> b :! s) ': as) as' => UpdateReads ((k :-> a :! W) '
 instance UpdateReads ((j :-> b :! s) ': as) as' => UpdateReads ((k :-> a :! R) ': (j :-> b :! s) ': as) ((k :-> a :! R) ': as') where
     updateReads (Ext e (Ext e' xs)) = Ext e $ updateReads (Ext e' xs)
 
-
 type Intersectable s t = (Sortable (Append s t), UpdateReads (Sort (Append s t)) t)
 
 intersectReads :: (Sortable (Append s t), Intersectable s t) => Set s -> Set t -> Set t
 intersectReads s t = updateReads (bsort (append s t))
 
+-- Effect-parameterised state type
 
--- Indexed state type
 data IxState s a = IxS { runState :: Set (Reads s) -> (a, (Set (Writes s))) }
 
 type family Reads t where
@@ -126,14 +126,13 @@ type family Writes t where
     Writes ((k :-> a :! RW) ': xs) = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! R) ': xs)  = Writes xs
 
--- 'ask' monadic primitive
+-- 'get/put' monadic primitives
 
 get :: Var (k::Symbol) -> IxState '[k :-> a :! R] a
 get _ = IxS $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
 
 put :: Var (k::Symbol) -> a -> IxState '[k :-> a :! W] ()
 put _ a = IxS $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
-
 
 -- Indexed monad instance
 instance IxMonad IxState where
@@ -151,3 +150,15 @@ instance IxMonad IxState where
                         (a, sW)  = e sR
                         (b, tW) = (runState $ k a) (sW `intersectReads` tR)
                     in  (b, sW `union` tW) 
+
+{-
+instance Subeffect IxState where
+    type Join IxState s t = Union s t
+    type SubInv IxState s t = Split s t (Union s t)
+    subEffect p (IxR e) = IxR $ \st -> let (s, t) = split st 
+                                           _ = ReflP p t 
+                                       in e s
+
+-- Equality proof between a set and a proxy
+data EqT a b where
+    ReflP :: Proxy t -> Set t -> EqT t -}
