@@ -4,6 +4,7 @@ module Control.IxMonad where
 
 import Control.IxMonad.Helpers.Set
 import Prelude hiding (Monad(..))
+import Data.Proxy
 import GHC.Prim
 
 class IxMonad (m :: k -> * -> *) where
@@ -21,5 +22,13 @@ class IxMonad (m :: k -> * -> *) where
    x >> y = x >>= (\_ -> y)
   
 fail = undefined
+
+class Subeffect (m :: k -> * -> *) where
+
+    type Join m (s :: k) (t :: k)  :: k
+    type SubInv m (s :: k) (t :: k)  :: Constraint
+
+    subEffect :: (SubInv m s t) => (Proxy t) -> m s a -> m (Join m s t) a
+
 
 

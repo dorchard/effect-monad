@@ -24,7 +24,9 @@ source-repository head
 library
   hs-source-dirs:       src
 
-  exposed-modules:      Control.IxMonad
+  exposed-modules:      Control.IxComonad
+                        Control.IxComonad.Coreader
+                        Control.IxMonad
                         Control.IxMonad.Cond
                         Control.IxMonad.Counter
                         Control.IxMonad.Maybe

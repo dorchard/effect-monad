@@ -11,6 +11,8 @@ data Set (n :: [*]) where
     Empty :: Set '[]
     Ext :: e -> Set s -> Set (e ': s)
 
+{-- Union --}
+
 type Union s t = RemDups (Sort (Append s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (Union s t)
@@ -117,21 +119,21 @@ instance (Show' (Set s), Show e) => Show' (Set (e ': s)) where
 
 -- Split operation (with type level version)
 
-class Split f g fg where
-   split :: Set fg -> (Set f, Set g)
+class Split s t st where
+   split :: Set st -> (Set s, Set t)
 
 instance Split '[] '[] '[] where
    split Empty = (Empty, Empty)
 
-instance Split xs ys zs => Split (e ': xs) (e ': ys) (e ': zs) where
-   split (Ext e zs) = let (xs', ys') = split zs
-                      in (Ext e xs', Ext e ys')
+instance Split s t st => Split (x ': s) (x ': t) (x ': st) where
+   split (Ext x st) = let (s, t) = split st
+                      in (Ext x s, Ext x t)
 
-instance (Split xs ys zs) => Split (x ': xs) ys (x ': zs) where
-   split (Ext x zs) = let (xs, ys) = split zs
-                      in  (Ext x xs, ys) 
+instance Split s t st => Split (x ': s) t (x ': st) where
+   split (Ext x st) = let (s, t) = split st
+                      in  (Ext x s, t) 
 
-instance (Split xs ys zs) => Split xs (y ': ys) (y ': zs) where
-   split (Ext y zs) = let (xs, ys) = split zs
-                      in  (xs, Ext y ys) 
+instance Split s t st => Split s (x ': t) (x ': st) where
+   split (Ext x st) = let (s, t) = split st
+                      in  (s, Ext x t) 
 
