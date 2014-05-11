@@ -17,7 +17,7 @@ import GHC.Prim
 data IxReader s a = IxR { runReader :: Set s -> a }
 
 instance IxMonad IxReader where
-    type Inv IxReader f g = (f ~ SetLike f, g ~ SetLike g, Split f g (Union f g))
+    type Inv IxReader f g = (f ~ AsSet f, g ~ AsSet g, Split f g (Union f g))
 
     type Unit IxReader = '[]
     type Plus IxReader f g = Union f g

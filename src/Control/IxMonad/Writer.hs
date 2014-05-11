@@ -18,7 +18,7 @@ data Writer w a = Writer { runWriter :: (a, Set w) }
 {-- Writer effect-parameterised monad -}
 
 instance IxMonad Writer where
-    type Inv Writer s t = Unionable s t
+    type Inv Writer s t = (s ~ AsSet s, t ~ AsSet t, Unionable s t)
 
     type Unit Writer = '[]
     type Plus Writer s t = Union s t

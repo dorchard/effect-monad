@@ -7,7 +7,7 @@
 module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..),
                                   Eff(..), Effect(..), Var(..), union, UnionS, 
                                      Reads(..), Writes(..), Unionable, Sortable, SetLike, 
-                                      StateSet, SetProperties, 
+                                      StateSet, 
                                           --- may not want to export these
                                           Intersectable, UpdateReads, Sort, Split) where
 
@@ -139,13 +139,13 @@ get _ = IxS $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
 put :: Var (k::Symbol) -> a -> IxState '[k :-> a :! W] ()
 put _ a = IxS $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
-type StateSet f = (SetProperties f, SetProperties (Reads f), SetProperties (Writes f))
-
-type SetProperties f = (UnionS f '[] ~ f, Split f '[] f, 
-                        UnionS '[] f ~ f, Split '[] f f, 
-                        UnionS f f ~ f, Split f f f,
-                        Unionable f '[], Unionable '[] f, 
-                        Intersectable f '[], Intersectable '[] f)
+type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
+                   
+type StateSetProperties f = (Intersectable f '[], Intersectable '[] f,
+                             UnionS f '[] ~ f, Split f '[] f, 
+                             UnionS '[] f ~ f, Split '[] f f, 
+                             UnionS f f ~ f, Split f f f,
+                             Unionable f '[], Unionable '[] f)
                    
 -- Indexed monad instance
 instance IxMonad IxState where

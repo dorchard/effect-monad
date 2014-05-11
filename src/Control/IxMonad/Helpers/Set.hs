@@ -3,22 +3,29 @@
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
-                                    Nubable(..), OrdH(..), Min, Max, Append(..), Split(..), SetLike, 
-                                    Sub(..), setize) where
+                                    Nubable(..), OrdH(..), Min, Max, Append(..), Split(..), 
+                                    AsSet, IsSet, setNormalize, 
+                                    Sub(..)) where
 
 {- Core Set definition, in terms of lists -}
 
-setize :: (Sortable s, Nubable' (Sort s)) => Set s -> Set (SetLike s)
-setize x = nub (bsort x)
+setNormalize :: (Sortable s, Nubable' (Sort s)) => Set s -> Set (AsSet s)
+setNormalize x = nub (bsort x)
 
 data Set (n :: [*]) where
     Empty :: Set '[]
     Ext :: e -> Set s -> Set (e ': s)
 
+type AsSet s = Nub (Sort s)
+
+type IsSet s = (s ~ Nub (Sort s))
+
+type SetProperties f = (Union f '[] ~ f, Split f '[] f, 
+                        Union '[] f ~ f, Split '[] f f, 
+                        Union f f ~ f, Split f f f,
+                        Unionable f '[], Unionable '[] f)
+
 {-- Union --}
-
-type SetLike s = Nub (Sort s)
-
 type Union s t = Nub (Sort (Append s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (Union s t)
@@ -64,15 +71,13 @@ instance Nubable (f ': s) s' => Nubable (e ': f ': s) (e ': s') where
 
 {- Sorting for normalising the representation -}
 
--- Top-level
-
+{- Sort top level -}
 type Sort l = Bubble l l
 
 bsort :: (Bubbler s s) => Set s -> Set (Sort s)
 bsort x = bubble x x
 
--- Iterate
-
+{- Iteration of the buble sort -}
 type family Bubble l l' where
     Bubble l '[] = l
     Bubble l (x ': xs) = Pass (Bubble l xs)
@@ -87,7 +92,6 @@ instance (Bubbler s t, Passer (Bubble s t)) => Bubbler s (e ': t) where
     bubble s (Ext _ t) = pass (bubble s t)
 
 {- Single-pass of the bubble sort -}
-
 type family Pass (l :: [*]) :: [*]
 type instance Pass '[]           = '[]
 type instance Pass '[e]          = '[e]
@@ -102,11 +106,10 @@ instance Passer '[] where
 instance Passer '[e] where
     pass (Ext e Empty) = Ext e Empty
 
-instance (Passer ((Max e f) ': s), OrdH e f)=> Passer (e ': f ': s) where 
+instance (Passer ((Max e f) ': s), OrdH e f) => Passer (e ': f ': s) where 
     pass (Ext e (Ext f s)) = Ext (minH e f) (pass (Ext (maxH e f) s))
 
 {- Ordering for the sort -}
-
 type family Min (a :: k) (b :: k) :: k
 type family Max (a :: k) (b :: k) :: k
 
@@ -115,7 +118,6 @@ class OrdH e f where
     maxH :: e -> f -> Max e f
 
 {- Showing a Set -}
-
 instance Show (Set '[]) where
     show Empty = "{}"
 instance (Show e, Show' (Set s)) => Show (Set (e ': s)) where
@@ -129,7 +131,6 @@ instance (Show' (Set s), Show e) => Show' (Set (e ': s)) where
     show' (Ext e s) = ", " ++ show e ++ (show' s)
 
 {- Split a set, given the sets we want to split it into -}
-
 class Split s t st where
    split :: Set st -> (Set s, Set t)
 

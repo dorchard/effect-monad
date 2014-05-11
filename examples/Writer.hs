@@ -1,8 +1,9 @@
 {-# LANGUAGE DataKinds, KindSignatures, TypeOperators, RebindableSyntax, FlexibleInstances, 
-             ConstraintKinds, FlexibleContexts 
+             ConstraintKinds, FlexibleContexts, TypeFamilies 
   #-}
 
 import Control.IxMonad
+import Control.IxMonad.Helpers.Set
 import Control.IxMonad.Writer
 
 import Data.Monoid
@@ -27,12 +28,12 @@ instance Show (Var "x") where
 instance Show (Var "y") where
     show _ = "y"
 
-foo :: (Unionable f '["x" :-> Int], Num a) => 
+foo :: (IsSet f, Unionable f '["x" :-> Int], Num a) => 
        (a -> Writer f t) -> Writer (Union f '["x" :-> Int]) ()
 foo f = do y <- f 3
            put (Var::(Var "x")) (42::Int)
 
-foo2 :: (Unionable f '["x" :-> Int, "y" :-> t], Num a) => 
+foo2 :: (IsSet f, Unionable f '["x" :-> Int, "y" :-> t], Num a) => 
        (a -> Writer f t) -> Writer (Union f '["x" :-> Int, "y" :-> t]) ()
 foo2 f = do y <- f 3
             put (Var::(Var "x")) (42::Int)
