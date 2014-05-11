@@ -13,7 +13,7 @@ import Data.Proxy
 import GHC.TypeLits
 import Prelude hiding (Monad(..))
 
-data Writer w a = Writer { runWriter :: (a, Set w) } 
+data Writer w a = Writer { runWriter :: (a, Set w) }
 
 {-- Writer effect-parameterised monad -}
 

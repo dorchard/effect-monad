@@ -3,7 +3,7 @@
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
-                                    RemDuper(..), OrdH(..), Min, Max, Append(..), Split(..)) where
+                                    RemDuper(..), OrdH(..), Min, Max, Append(..), Split(..), SetLike) where
 
 {- Core Set definition, in terms of lists -}
 
@@ -12,6 +12,8 @@ data Set (n :: [*]) where
     Ext :: e -> Set s -> Set (e ': s)
 
 {-- Union --}
+
+type SetLike s = RemDups (Sort s)
 
 type Union s t = RemDups (Sort (Append s t))
 

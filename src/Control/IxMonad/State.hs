@@ -6,7 +6,9 @@
 
 module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..),
                                   Eff(..), Effect(..), Var(..), union, UnionS, 
-                                     Reads(..), Writes(..), Unionable, Sortable, Intersectable) where
+                                     Reads(..), Writes(..), Unionable, Sortable, 
+                                          --- may not want to export these
+                                          Intersectable, UpdateReads, Sort, Split) where
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 
