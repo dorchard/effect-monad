@@ -6,13 +6,14 @@
 
 module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..),
                                   Eff(..), Effect(..), Var(..), union, UnionS, 
-                                     Reads(..), Writes(..), Unionable, Sortable, 
+                                     Reads(..), Writes(..), Unionable, Sortable, SetLike, 
+                                      StateSet, SetProperties, 
                                           --- may not want to export these
                                           Intersectable, UpdateReads, Sort, Split) where
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 
-import Control.IxMonad.Helpers.Set hiding (Unionable, union)
+import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike)
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
@@ -37,8 +38,10 @@ instance (Show (Effect f), Show a) => Show (a :! f) where
 
 infixl 3 :!
 
+type SetLike s = RemDupState (Sort s)
 type UnionS s t = RemDupState (Sort (Append s t))
-type Unionable s t = (Sortable (Append s t), RemDuperS (Sort (Append s t)) (RemDupState (Sort (Append s t))))
+type Unionable s t = (Sortable (Append s t), RemDuperS (Sort (Append s t)) (RemDupState (Sort (Append s t))),
+                      Split s t (Union s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = remDupState (bsort (append s t))
@@ -136,6 +139,14 @@ get _ = IxS $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
 put :: Var (k::Symbol) -> a -> IxState '[k :-> a :! W] ()
 put _ a = IxS $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
+type StateSet f = (SetProperties f, SetProperties (Reads f), SetProperties (Writes f))
+
+type SetProperties f = (UnionS f '[] ~ f, Split f '[] f, 
+                        UnionS '[] f ~ f, Split '[] f f, 
+                        UnionS f f ~ f, Split f f f,
+                        Unionable f '[], Unionable '[] f, 
+                        Intersectable f '[], Intersectable '[] f)
+                   
 -- Indexed monad instance
 instance IxMonad IxState where
     type Inv IxState s t = (Split (Reads s) (Reads t) (Reads (UnionS s t)), 

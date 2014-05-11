@@ -10,7 +10,7 @@ import GHC.Prim
 {-
 type InvMain m f g = (Plus m (Unit m) f ~ f,
                       Plus m f (Unit m) ~ f) 
-                      --Plus m f (Plus m g h) ~ Plus m (Plus m f g) h)
+                      Plus m f (Plus m g h) ~ Plus m (Plus m f g) h)
 -}
 
 class IxMonad (m :: k -> * -> *) where
@@ -22,9 +22,9 @@ class IxMonad (m :: k -> * -> *) where
    type Inv m f g = ()
 
    return :: a -> m (Unit m) a
-   (>>=) :: (InvMain m f g, Inv m f g) => m f a -> (a -> m g b) -> m (Plus m f g) b
+   (>>=) :: (Inv m f g) => m f a -> (a -> m g b) -> m (Plus m f g) b
 
-   (>>) :: (InvMain m f g, Inv m f g) => m f a -> m g b -> m (Plus m f g) b
+   (>>) :: (Inv m f g) => m f a -> m g b -> m (Plus m f g) b
    x >> y = x >>= (\_ -> y)
   
 fail = undefined
