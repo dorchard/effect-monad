@@ -1,4 +1,6 @@
-{-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction, DataKinds, TypeOperators #-}
+{-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction, DataKinds, TypeOperators, 
+   -- Remove this after experimenting with 'sub'
+  MultiParamTypeClasses, FlexibleInstances, GADTs, FlexibleContexts, UndecidableInstances, OverlappingInstances #-}
 
 import Prelude hiding (Monad(..))
 import Control.IxMonad
@@ -16,10 +18,10 @@ foo = do x <- ask (Var::(Var "x"))
 
 runFoo = runReader foo (Ext (Var :-> 1) (Ext (Var :-> [2, 3]) Empty))
 
--- Example with subeffecting
+-- Examples with subeffecting
 
--- foo2 :: IxReader '["x" :-> a, "xs" :-> [a], "y" :-> b] [a]
-
-foo2 = subEffect (Proxy::(Proxy '["y" :-> b])) foo 
+foo2 :: Sub '["x" :-> a, "xs" :-> [a], "y" :-> b] t
+foo2 = sub foo
 
 runFoo2 = runReader foo2 (Ext (Var :-> 1) (Ext (Var :-> [2, 3]) (Ext (Var :-> undefined) Empty)))
+

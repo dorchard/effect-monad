@@ -30,11 +30,5 @@ class IxMonad (m :: k -> * -> *) where
 fail = undefined
 
 class Subeffect (m :: k -> * -> *) where
-
-    type Join m (s :: k) (t :: k)  :: k
     type SubInv m (s :: k) (t :: k)  :: Constraint
-
-    subEffect :: (SubInv m s t) => (Proxy t) -> m s a -> m (Join m s t) a
-
-
-
+    sub :: (SubInv m s t) => m s a -> m t a
