@@ -3,7 +3,7 @@
              DataKinds, TypeOperators, PolyKinds, ConstraintKinds, FlexibleContexts, ScopedTypeVariables  
              #-}
 
-module Control.IxMonad.Reader (IxReader(..), ask, (:->)(..), Var(..), Set(..),Subeffect(..),Proxy(..)) where
+module Control.IxMonad.Reader (IxReader(..), ask, merge, (:->)(..), Var(..), Sub, Set(..)) where
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Set hiding (sub)
@@ -11,14 +11,13 @@ import qualified Control.IxMonad.Helpers.Set as Set
 import Control.IxMonad.Helpers.Mapping
 import Prelude hiding (Monad(..))
 import GHC.TypeLits
-import Data.Proxy
 
 import GHC.Prim
 
 data IxReader s a = IxR { runReader :: Set s -> a }
 
 instance IxMonad IxReader where
-    type Inv IxReader f g = Split f g (Union f g)
+    type Inv IxReader f g = (f ~ SetLike f, g ~ SetLike g, Split f g (Union f g))
 
     type Unit IxReader = '[]
     type Plus IxReader f g = Union f g

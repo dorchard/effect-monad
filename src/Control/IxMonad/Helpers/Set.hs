@@ -4,9 +4,12 @@
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
                                     RemDuper(..), OrdH(..), Min, Max, Append(..), Split(..), SetLike, 
-                                    Sub(..)) where
+                                    Sub(..), setize) where
 
 {- Core Set definition, in terms of lists -}
+
+setize :: (Sortable s, RemDuper (Sort s) (RemDups (Sort s))) => Set s -> Set (SetLike s)
+setize x = remDup (bsort x)
 
 data Set (n :: [*]) where
     Empty :: Set '[]
@@ -120,7 +123,7 @@ instance Show' (Set '[]) where
 instance (Show' (Set s), Show e) => Show' (Set (e ': s)) where
     show' (Ext e s) = ", " ++ show e ++ (show' s)
 
--- Split operation (with type level version)
+{- Split a set, given the sets we want to split it into -}
 
 class Split s t st where
    split :: Set st -> (Set s, Set t)
@@ -140,13 +143,15 @@ instance Split s t st => Split s (x ': t) (x ': st) where
    split (Ext x st) = let (s, t) = split st
                       in  (s, Ext x t) 
 
--- Generate a subset 's' from a superset 'st'
-
+{-- Construct a subset 's' from a superset 'st' -}
 class Sub s st where
-   sub :: Set st -> (Set s)
+   sub :: Set st -> Set s
 
 instance Sub '[] '[] where
    sub Empty = Empty
+
+instance Sub '[] (x ': st) where
+   sub xs = Empty
 
 instance Sub s st => Sub (x ': s) (x ': st) where
    sub (Ext x xs) = Ext x (sub xs)

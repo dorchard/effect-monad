@@ -50,3 +50,4 @@ instance (Chooser (CmpSymbol j k)) => OrdH (j :-> u) (k :-> v) where
     minH (j :-> u) (k :-> v) = Var :-> (select j k u v)
     maxH (j :-> u) (k :-> v) = Var :-> (select j k v u)
 
+
