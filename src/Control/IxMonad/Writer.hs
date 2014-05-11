@@ -32,6 +32,6 @@ put k v = Writer ((), Ext (k :-> v) Empty)
 
 {-- Define the operation for removing duplicates using mappend --}
 
-instance (Monoid u, RemDuper ((k :-> u) ': s) s') => RemDuper ((k :-> u) ': (k :-> u) ': s) s' where
-    remDup (Ext (_ :-> u) (Ext (k :-> v) s)) = remDup (Ext (k :-> (u `mappend` v)) s)
+instance (Monoid u, Nubable ((k :-> u) ': s) s') => Nubable ((k :-> u) ': (k :-> u) ': s) s' where
+    nub (Ext (_ :-> u) (Ext (k :-> v) s)) = nub (Ext (k :-> (u `mappend` v)) s)
 

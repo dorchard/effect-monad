@@ -3,13 +3,13 @@
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
-                                    RemDuper(..), OrdH(..), Min, Max, Append(..), Split(..), SetLike, 
+                                    Nubable(..), OrdH(..), Min, Max, Append(..), Split(..), SetLike, 
                                     Sub(..), setize) where
 
 {- Core Set definition, in terms of lists -}
 
-setize :: (Sortable s, RemDuper (Sort s) (RemDups (Sort s))) => Set s -> Set (SetLike s)
-setize x = remDup (bsort x)
+setize :: (Sortable s, Nubable' (Sort s)) => Set s -> Set (SetLike s)
+setize x = nub (bsort x)
 
 data Set (n :: [*]) where
     Empty :: Set '[]
@@ -17,14 +17,14 @@ data Set (n :: [*]) where
 
 {-- Union --}
 
-type SetLike s = RemDups (Sort s)
+type SetLike s = Nub (Sort s)
 
-type Union s t = RemDups (Sort (Append s t))
+type Union s t = Nub (Sort (Append s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (Union s t)
-union s t = remDup (bsort (append s t))
+union s t = nub (bsort (append s t))
 
-type Unionable s t = (Sortable (Append s t), RemDuper (Sort (Append s t)) (RemDups (Sort (Append s t))))
+type Unionable s t = (Sortable (Append s t), Nubable' (Sort (Append s t)))
 type Sortable s = Bubbler s s
 
 {- List append (essentially set disjoint union) -}
@@ -39,23 +39,28 @@ append (Ext e xs) ys = Ext e (append xs ys)
 
 {- Remove duplicates-}
 
-type family RemDups t where
-    RemDups '[]           = '[]
-    RemDups '[e]          = '[e]
-    RemDups (e ': e ': s) = RemDups (e ': s)
-    RemDups (e ': f ': s) = e ': RemDups (f ': s)
+type Nubable' t = Nubable t (Nub t)
 
-class RemDuper t v where
-    remDup :: Set t -> Set v
+type family Nub t where
+    Nub '[]           = '[]
+    Nub '[e]          = '[e]
+    Nub (e ': e ': s) = Nub (e ': s)
+    Nub (e ': f ': s) = e ': Nub (f ': s)
 
-instance RemDuper '[] '[] where
-    remDup Empty = Empty
+class Nubable t v where
+    nub :: Set t -> Set v
 
-instance RemDuper '[e] '[e] where
-    remDup (Ext x Empty) = Ext x Empty
+instance Nubable '[] '[] where
+    nub Empty = Empty
 
-instance RemDuper (f ': s) s' => RemDuper (e ': f ': s) (e ': s') where
-    remDup (Ext e (Ext f s)) = Ext e (remDup (Ext f s))
+instance Nubable '[e] '[e] where
+    nub (Ext x Empty) = Ext x Empty
+
+-- The case for equal types is not define here, but should be given
+-- per-application
+
+instance Nubable (f ': s) s' => Nubable (e ': f ': s) (e ': s') where
+    nub (Ext e (Ext f s)) = Ext e (nub (Ext f s))
 
 {- Sorting for normalising the representation -}
 

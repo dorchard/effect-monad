@@ -13,8 +13,9 @@ import Data.Proxy
 
 -- foo :: IxReader '["x" :-> a, "xs" :-> [a]] [a]
 foo = do x <- ask (Var::(Var "x"))
+         x' <- ask (Var::(Var "x"))
          xs <- ask (Var::(Var "xs"))
-         return (x:xs)
+         return (x:x':xs)
 
 runFoo = runReader foo (Ext (Var :-> 1) (Ext (Var :-> [2, 3]) Empty))
 
