@@ -3,7 +3,7 @@
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
-                                    Nubable(..), OrdH(..), Min, Max, Append(..), Split(..), 
+                                    OrdH(..), Min, Max, Append(..), Split(..), 
                                     Nub, Nubable(..), 
                                     AsSet, asSet, IsSet, 
                                     Subset(..)) where
