@@ -57,3 +57,4 @@ instance Chooser EQ where
 
 instance Chooser GT where
     choose _ p q = q
+

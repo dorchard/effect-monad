@@ -38,17 +38,17 @@ instance (Monoid u, Nubable ((k :-> u) ': s)) => Nubable ((k :-> u) ': (k :-> u)
 {-- Sub effecting -}
 
 instance Superset s t => Subeffect Writer s t where
-    sub (Writer (a, w)) = Writer (a, (sup w)::(Set t))
+    sub (Writer (a, w)) = Writer (a, (superset w)::(Set t))
 
+{-- Supersets with mappings inside -}
 class Superset s t where
-    sup :: Set s -> Set t
+    superset :: Set s -> Set t
 
 instance Superset '[] '[] where
-    sup Empty = Empty
+    superset Empty = Empty
 
 instance (Monoid x, Superset '[] s) => Superset '[] ((k :-> x) ': s) where
-    sup Empty = Ext (Var :-> mempty) (sup Empty)
+    superset Empty = Ext (Var :-> mempty) (superset Empty)
 
 instance Superset s t => Superset ((k :-> v) ': s) ((k :-> v) ': t) where
-    sup (Ext x xs) = Ext x (sup xs)
-
+    superset (Ext x xs) = Ext x (superset xs)

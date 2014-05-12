@@ -4,7 +4,7 @@
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
              InstanceSigs, IncoherentInstances #-}
 
-module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..),
+module Control.IxMonad.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
                                   Eff(..), Effect(..), Var(..), union, UnionS, 
                                      Reads(..), Writes(..), Unionable, Sortable, SetLike, 
                                       StateSet, 
@@ -14,6 +14,8 @@ module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 
 import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
+import qualified Control.IxMonad.Helpers.Set as Set
+
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
@@ -40,42 +42,29 @@ infixl 3 :!
 
 type SetLike s = Nub (Sort s)
 type UnionS s t = Nub (Sort (Append s t))
-type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (Sort (Append s t))),
+type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)),
                       Split s t (Union s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = nub (bsort (append s t))
 
--- Remove duplicates from a type-level list and turn different sorts into 'RW'
+{- Remove duplicates from a type-level list and turn different sorts into 'RW'
+   extends the previous definition from Set module -}
 type family Nub t where
-            Nub '[]       = '[]
-            Nub '[e]      = '[e]
-            Nub ((k :-> a :! s) ': (k :-> b :! s) ': as) = Nub ((k :-> b :! s) ': as)
             Nub ((k :-> a :! s) ': (k :-> a :! t) ': as) = Nub ((k :-> a :! RW) ': as)
-            Nub ((k :-> a :! s) ': (j :-> b :! t) ': as) = (k :-> a :! s) ': Nub ((j :-> b :! t) ': as)
+            Nub t = Set.Nub t
 
+class Nubable t where
+    nub :: Set t -> Set (Nub t)
 
-class Nubable t v where
-    nub :: Set t -> Set v
-
-instance Nubable '[] '[] where
-    nub Empty = Empty
-
-instance Nubable '[e] '[e] where
-    nub (Ext e Empty) = (Ext e Empty)
-
-instance Nubable ((k :-> b :! s) ': as) as' => 
-          Nubable ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
-    nub (Ext _ (Ext x xs)) = nub (Ext x xs)
-
-instance Nubable ((k :-> a :! RW) ': as) as' => 
-           Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
+instance Nubable ((k :-> a :! RW) ': as) => 
+           Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as)where
     nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
 
-instance Nubable ((j :-> b :! t) ': as) as' => 
-             Nubable ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
-    nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
+instance (Nub t ~ Set.Nub t, Set.Nubable t) => Nubable t where
+    nub x = Set.nub x
 
+{- Update reads, that is any writes are pushed into reads, a bit like intersection -}
 
 class UpdateReads t v where
     updateReads :: Set t -> Set v
@@ -117,7 +106,7 @@ intersectReads s t = updateReads (bsort (append s t))
 
 -- Effect-parameterised state type
 
-data IxState s a = IxS { runState :: Set (Reads s) -> (a, (Set (Writes s))) }
+data State s a = State { runState :: Set (Reads s) -> (a, (Set (Writes s))) }
 
 type family Reads t where
     Reads '[]                    = '[]
@@ -133,11 +122,11 @@ type family Writes t where
 
 -- 'get/put' monadic primitives
 
-get :: Var k -> IxState '[k :-> a :! R] a
-get _ = IxS $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
+get :: Var k -> State '[k :-> a :! R] a
+get _ = State $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
 
-put :: Var k -> a -> IxState '[k :-> a :! W] ()
-put _ a = IxS $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
+put :: Var k -> a -> State '[k :-> a :! W] ()
+put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
                    
@@ -148,26 +137,36 @@ type StateSetProperties f = (Intersectable f '[], Intersectable '[] f,
                              Unionable f '[], Unionable '[] f)
                    
 -- Indexed monad instance
-instance IxMonad IxState where
-    type Inv IxState s t = (Split (Reads s) (Reads t) (Reads (UnionS s t)), 
+instance IxMonad State where
+    type Inv State s t = (Split (Reads s) (Reads t) (Reads (UnionS s t)), 
                             Unionable (Writes s) (Writes t), 
                             Intersectable (Writes s) (Reads t), 
                             Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
-    type Unit IxState = '[]
-    type Plus IxState s t = UnionS s t
+    type Unit State = '[]
+    type Plus State s t = UnionS s t
 
-    return x = IxS $ \Empty -> (x, Empty)
+    return x = State $ \Empty -> (x, Empty)
 
-    (IxS e) >>= k = 
-        IxS $ \i -> let (sR, tR) = split i
-                        (a, sW)  = e sR
-                        (b, tW) = (runState $ k a) (sW `intersectReads` tR)
-                    in  (b, sW `union` tW) 
+    (State e) >>= k = 
+        State $ \i -> let (sR, tR) = split i
+                          (a, sW)  = e sR
+                          (b, tW) = (runState $ k a) (sW `intersectReads` tR)
+                      in  (b, sW `union` tW) 
+
 
 {-
-instance Subeffect IxState where
-    type Join IxState s t = Union s t
-    type SubInv IxState s t = Split s t (Union s t)
+
+instance (Split s t (Union s t), Sub s t) => Subeffect State s t where
+    sub (State e) = IxR $ \st -> let (s, t) = split st 
+                                           _ = ReflP p t 
+                                       in e s
+-}
+
+
+{-
+instance Subeffect State where
+    type Join State s t = Union s t
+    type SubInv State s t = Split s t (Union s t)
     subEffect p (IxR e) = IxR $ \st -> let (s, t) = split st 
                                            _ = ReflP p t 
                                        in e s

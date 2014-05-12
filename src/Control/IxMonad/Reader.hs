@@ -3,7 +3,7 @@
              DataKinds, TypeOperators, PolyKinds, ConstraintKinds, FlexibleContexts, ScopedTypeVariables  
              #-}
 
-module Control.IxMonad.Reader (IxReader(..), ask, merge, (:->)(..), Var(..), Subset, Set(..)) where
+module Control.IxMonad.Reader (Reader(..), ask, merge, (:->)(..), Var(..), Subset, Set(..)) where
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Set
@@ -13,24 +13,24 @@ import GHC.TypeLits
 
 import GHC.Prim
 
-data IxReader s a = IxR { runReader :: Set s -> a }
+data Reader s a = IxR { runReader :: Set s -> a }
 
-instance IxMonad IxReader where
-    type Inv IxReader f g = (f ~ AsSet f, g ~ AsSet g, Split f g (Union f g))
+instance IxMonad Reader where
+    type Inv Reader f g = (f ~ AsSet f, g ~ AsSet g, Split f g (Union f g))
 
-    type Unit IxReader = '[]
-    type Plus IxReader f g = Union f g
+    type Unit Reader = '[]
+    type Plus Reader f g = Union f g
 
     return x = IxR $ \Empty -> x
     (IxR e) >>= k = IxR $ \fg -> let (f, g) = split fg
                                  in (runReader $ k (e f)) g
 
-ask :: Var k -> IxReader '[k :-> v] v
+ask :: Var k -> Reader '[k :-> v] v
 ask Var = IxR $ \(Ext (Var :-> v) Empty) -> v
 
-merge :: (Unionable s t) => (a -> IxReader (Union s t) b) -> IxReader s (a -> IxReader t b)
+merge :: (Unionable s t) => (a -> Reader (Union s t) b) -> Reader s (a -> Reader t b)
 merge k = IxR $ \s -> \a -> IxR $ \t -> runReader (k a) (union s t)
 
-instance Subset s t => Subeffect IxReader s t where
+instance Subset s t => Subeffect Reader s t where
     sub (IxR e) = IxR $ \st -> let s = subset st in e s
 
