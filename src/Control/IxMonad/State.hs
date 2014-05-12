@@ -13,7 +13,7 @@ module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 
-import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike, Nub, nub)
+import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
@@ -40,11 +40,11 @@ infixl 3 :!
 
 type SetLike s = Nub (Sort s)
 type UnionS s t = Nub (Sort (Append s t))
-type Unionable s t = (Sortable (Append s t), RemDuperS (Sort (Append s t)) (Nub (Sort (Append s t))),
+type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (Sort (Append s t))),
                       Split s t (Union s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
-union s t = remDupState (bsort (append s t))
+union s t = nub (bsort (append s t))
 
 -- Remove duplicates from a type-level list and turn different sorts into 'RW'
 type family Nub t where
@@ -55,26 +55,26 @@ type family Nub t where
             Nub ((k :-> a :! s) ': (j :-> b :! t) ': as) = (k :-> a :! s) ': Nub ((j :-> b :! t) ': as)
 
 
-class RemDuperS t v where
-    remDupState :: Set t -> Set v
+class Nubable t v where
+    nub :: Set t -> Set v
 
-instance RemDuperS '[] '[] where
-    remDupState Empty = Empty
+instance Nubable '[] '[] where
+    nub Empty = Empty
 
-instance RemDuperS '[e] '[e] where
-    remDupState (Ext e Empty) = (Ext e Empty)
+instance Nubable '[e] '[e] where
+    nub (Ext e Empty) = (Ext e Empty)
 
-instance RemDuperS ((k :-> b :! s) ': as) as' => 
-          RemDuperS ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
-    remDupState (Ext _ (Ext x xs)) = remDupState (Ext x xs)
+instance Nubable ((k :-> b :! s) ': as) as' => 
+          Nubable ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
+    nub (Ext _ (Ext x xs)) = nub (Ext x xs)
 
-instance RemDuperS ((k :-> a :! RW) ': as) as' => 
-           RemDuperS ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
-    remDupState (Ext _ (Ext (k :-> (a :! _)) xs)) = remDupState (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
+instance Nubable ((k :-> a :! RW) ': as) as' => 
+           Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
+    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
 
-instance RemDuperS ((j :-> b :! t) ': as) as' => 
-             RemDuperS ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
-    remDupState (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (remDupState (Ext (j :-> (b :! t)) xs))
+instance Nubable ((j :-> b :! t) ': as) as' => 
+             Nubable ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
+    nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
 
 
 class UpdateReads t v where
@@ -133,10 +133,10 @@ type family Writes t where
 
 -- 'get/put' monadic primitives
 
-get :: Var (k::Symbol) -> IxState '[k :-> a :! R] a
+get :: Var k -> IxState '[k :-> a :! R] a
 get _ = IxS $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
 
-put :: Var (k::Symbol) -> a -> IxState '[k :-> a :! W] ()
+put :: Var k -> a -> IxState '[k :-> a :! W] ()
 put _ a = IxS $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
