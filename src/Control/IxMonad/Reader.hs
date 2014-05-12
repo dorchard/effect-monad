@@ -3,11 +3,10 @@
              DataKinds, TypeOperators, PolyKinds, ConstraintKinds, FlexibleContexts, ScopedTypeVariables  
              #-}
 
-module Control.IxMonad.Reader (IxReader(..), ask, merge, (:->)(..), Var(..), Sub, Set(..)) where
+module Control.IxMonad.Reader (IxReader(..), ask, merge, (:->)(..), Var(..), Subset, Set(..)) where
 
 import Control.IxMonad
-import Control.IxMonad.Helpers.Set hiding (sub)
-import qualified Control.IxMonad.Helpers.Set as Set
+import Control.IxMonad.Helpers.Set
 import Control.IxMonad.Helpers.Mapping
 import Prelude hiding (Monad(..))
 import GHC.TypeLits
@@ -32,7 +31,6 @@ ask Var = IxR $ \(Ext (Var :-> v) Empty) -> v
 merge :: (Unionable s t) => (a -> IxReader (Union s t) b) -> IxReader s (a -> IxReader t b)
 merge k = IxR $ \s -> \a -> IxR $ \t -> runReader (k a) (union s t)
 
-instance Subeffect IxReader where
-    type SubInv IxReader s t = Sub s t
-    sub (IxR e) = IxR $ \st -> let s = Set.sub st in e s
+instance Subset s t => Subeffect IxReader s t where
+    sub (IxR e) = IxR $ \st -> let s = subset st in e s
 

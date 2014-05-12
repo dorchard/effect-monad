@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds #-}
+{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses #-}
 
 module Control.IxMonad where 
 
@@ -29,6 +29,5 @@ class IxMonad (m :: k -> * -> *) where
   
 fail = undefined
 
-class Subeffect (m :: k -> * -> *) where
-    type SubInv m (s :: k) (t :: k)  :: Constraint
-    sub :: (SubInv m s t) => m s a -> m t a
+class Subeffect (m :: k -> * -> *) f g where
+    sub :: m f a -> m g a

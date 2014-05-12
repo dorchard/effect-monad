@@ -4,17 +4,17 @@
 
 module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
                                     Nubable(..), OrdH(..), Min, Max, Append(..), Split(..), 
-                                    AsSet, IsSet, setNormalize, 
-                                    Sub(..)) where
+                                    AsSet, asSet, IsSet, 
+                                    Subset(..)) where
 
 {- Core Set definition, in terms of lists -}
-
-setNormalize :: (Sortable s, Nubable' (Sort s)) => Set s -> Set (AsSet s)
-setNormalize x = nub (bsort x)
 
 data Set (n :: [*]) where
     Empty :: Set '[]
     Ext :: e -> Set s -> Set (e ': s)
+
+asSet :: (Sortable s, Nubable (Sort s)) => Set s -> Set (AsSet s)
+asSet x = nub (bsort x)
 
 type AsSet s = Nub (Sort s)
 
@@ -31,14 +31,14 @@ type Union s t = Nub (Sort (Append s t))
 union :: (Unionable s t) => Set s -> Set t -> Set (Union s t)
 union s t = nub (bsort (append s t))
 
-type Unionable s t = (Sortable (Append s t), Nubable' (Sort (Append s t)))
+type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)))
 type Sortable s = Bubbler s s
 
 {- List append (essentially set disjoint union) -}
 
-type family Append (s :: [*]) (t :: [*]) :: [*]
-type instance Append '[] t = t
-type instance Append (x ': xs) ys = x ': (Append xs ys)
+type family Append s t where
+            Append '[] t = t
+            Append (x ': xs) ys = x ': (Append xs ys)
 
 append :: Set s -> Set t -> Set (Append s t)
 append Empty x = x
@@ -46,27 +46,26 @@ append (Ext e xs) ys = Ext e (append xs ys)
 
 {- Remove duplicates-}
 
-type Nubable' t = Nubable t (Nub t)
-
 type family Nub t where
     Nub '[]           = '[]
     Nub '[e]          = '[e]
     Nub (e ': e ': s) = Nub (e ': s)
     Nub (e ': f ': s) = e ': Nub (f ': s)
 
-class Nubable t v where
-    nub :: Set t -> Set v
+class Nubable t where
+    nub :: Set t -> Set (Nub t)
 
-instance Nubable '[] '[] where
+instance Nubable '[] where
     nub Empty = Empty
 
-instance Nubable '[e] '[e] where
+instance Nubable '[e] where
     nub (Ext x Empty) = Ext x Empty
 
 -- The case for equal types is not define here, but should be given
 -- per-application
 
-instance Nubable (f ': s) s' => Nubable (e ': f ': s) (e ': s') where
+instance (Nub (e ': f ': s) ~ (e ': Nub (f ': s)), 
+              Nubable (f ': s)) => Nubable (e ': f ': s) where
     nub (Ext e (Ext f s)) = Ext e (nub (Ext f s))
 
 {- Sorting for normalising the representation -}
@@ -79,8 +78,8 @@ bsort x = bubble x x
 
 {- Iteration of the buble sort -}
 type family Bubble l l' where
-    Bubble l '[] = l
-    Bubble l (x ': xs) = Pass (Bubble l xs)
+            Bubble l '[] = l
+            Bubble l (x ': xs) = Pass (Bubble l xs)
 
 class Bubbler s s' where
     bubble :: Set s -> Set s' -> Set (Bubble s s')
@@ -92,10 +91,10 @@ instance (Bubbler s t, Passer (Bubble s t)) => Bubbler s (e ': t) where
     bubble s (Ext _ t) = pass (bubble s t)
 
 {- Single-pass of the bubble sort -}
-type family Pass (l :: [*]) :: [*]
-type instance Pass '[]           = '[]
-type instance Pass '[e]          = '[e]
-type instance Pass (e ': f ': s) = Min e f ': (Pass ((Max e f) ': s))
+type family Pass l where
+    Pass '[]           = '[]
+    Pass '[e]          = '[e]
+    Pass (e ': f ': s) = Min e f ': (Pass ((Max e f) ': s))
 
 class Passer s where
     pass :: Set s -> Set (Pass s)
@@ -110,8 +109,8 @@ instance (Passer ((Max e f) ': s), OrdH e f) => Passer (e ': f ': s) where
     pass (Ext e (Ext f s)) = Ext (minH e f) (pass (Ext (maxH e f) s))
 
 {- Ordering for the sort -}
-type family Min (a :: k) (b :: k) :: k
-type family Max (a :: k) (b :: k) :: k
+type family Min a b
+type family Max a b 
 
 class OrdH e f where
     minH :: e -> f -> Min e f
@@ -149,18 +148,15 @@ instance Split s t st => Split s (x ': t) (x ': st) where
    split (Ext x st) = let (s, t) = split st
                       in  (s, Ext x t) 
 
-{-- Construct a subset 's' from a superset 'st' -}
-class Sub s st where
-   sub :: Set st -> Set s
+{-- Construct a subsetset 's' from a superset 'st' -}
+class Subset s t where
+   subset :: Set t -> Set s
 
-instance Sub '[] '[] where
-   sub Empty = Empty
+instance Subset '[] t where 
+   subset xs = Empty
 
-instance Sub '[] (x ': st) where
-   sub xs = Empty
+instance Subset s t => Subset (x ': s) (x ': t) where
+   subset (Ext x xs) = Ext x (subset xs)
 
-instance Sub s st => Sub (x ': s) (x ': st) where
-   sub (Ext x xs) = Ext x (sub xs)
-
-instance Sub s st => Sub s (x ': st) where
-   sub (Ext _ xs) = sub xs
+instance Subset s t => Subset s (x ': t) where
+   subset (Ext _ xs) = subset xs

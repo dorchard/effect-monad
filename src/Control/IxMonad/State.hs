@@ -13,7 +13,7 @@ module Control.IxMonad.State (Set(..), get, put, IxState(..), (:->)(..), (:!)(..
 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Mapping 
-import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike)
+import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike, Nub, nub)
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
@@ -38,21 +38,21 @@ instance (Show (Effect f), Show a) => Show (a :! f) where
 
 infixl 3 :!
 
-type SetLike s = RemDupState (Sort s)
-type UnionS s t = RemDupState (Sort (Append s t))
-type Unionable s t = (Sortable (Append s t), RemDuperS (Sort (Append s t)) (RemDupState (Sort (Append s t))),
+type SetLike s = Nub (Sort s)
+type UnionS s t = Nub (Sort (Append s t))
+type Unionable s t = (Sortable (Append s t), RemDuperS (Sort (Append s t)) (Nub (Sort (Append s t))),
                       Split s t (Union s t))
 
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = remDupState (bsort (append s t))
 
 -- Remove duplicates from a type-level list and turn different sorts into 'RW'
-type family RemDupState t where
-            RemDupState '[]       = '[]
-            RemDupState '[e]      = '[e]
-            RemDupState ((k :-> a :! s) ': (k :-> b :! s) ': as) = RemDupState ((k :-> b :! s) ': as)
-            RemDupState ((k :-> a :! s) ': (k :-> a :! t) ': as) = RemDupState ((k :-> a :! RW) ': as)
-            RemDupState ((k :-> a :! s) ': (j :-> b :! t) ': as) = (k :-> a :! s) ': RemDupState ((j :-> b :! t) ': as)
+type family Nub t where
+            Nub '[]       = '[]
+            Nub '[e]      = '[e]
+            Nub ((k :-> a :! s) ': (k :-> b :! s) ': as) = Nub ((k :-> b :! s) ': as)
+            Nub ((k :-> a :! s) ': (k :-> a :! t) ': as) = Nub ((k :-> a :! RW) ': as)
+            Nub ((k :-> a :! s) ': (j :-> b :! t) ': as) = (k :-> a :! s) ': Nub ((j :-> b :! t) ': as)
 
 
 class RemDuperS t v where

@@ -2,7 +2,7 @@
              MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, 
              ScopedTypeVariables, PolyKinds, FlexibleContexts, InstanceSigs #-}
 
-module Control.IxMonad.Writer(Writer(..), Symbol, put, (:->), Set(..), union, Var(..), 
+module Control.IxMonad.Writer(Writer(..), Symbol, put, (:->), IsSet, Set(..), union, Var(..), 
                               Union, Unionable) where
 
 import Control.IxMonad 
@@ -32,6 +32,23 @@ put k v = Writer ((), Ext (k :-> v) Empty)
 
 {-- Define the operation for removing duplicates using mappend --}
 
-instance (Monoid u, Nubable ((k :-> u) ': s) s') => Nubable ((k :-> u) ': (k :-> u) ': s) s' where
+instance (Monoid u, Nubable ((k :-> u) ': s)) => Nubable ((k :-> u) ': (k :-> u) ': s) where
     nub (Ext (_ :-> u) (Ext (k :-> v) s)) = nub (Ext (k :-> (u `mappend` v)) s)
+
+{-- Sub effecting -}
+
+instance Superset s t => Subeffect Writer s t where
+    sub (Writer (a, w)) = Writer (a, (sup w)::(Set t))
+
+class Superset s t where
+    sup :: Set s -> Set t
+
+instance Superset '[] '[] where
+    sup Empty = Empty
+
+instance (Monoid x, Superset '[] s) => Superset '[] ((k :-> x) ': s) where
+    sup Empty = Ext (Var :-> mempty) (sup Empty)
+
+instance Superset s t => Superset ((k :-> v) ': s) ((k :-> v) ': t) where
+    sup (Ext x xs) = Ext x (sup xs)
 

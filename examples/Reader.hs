@@ -1,7 +1,5 @@
 {-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction, DataKinds, TypeOperators, 
-   -- Remove this after experimenting with 'sub'
-  MultiParamTypeClasses, FlexibleInstances, GADTs, FlexibleContexts, UndecidableInstances, OverlappingInstances #-}
-
+   FlexibleContexts, ConstraintKinds #-}
 import Prelude hiding (Monad(..))
 import Control.IxMonad
 import Control.IxMonad.Reader
@@ -13,17 +11,20 @@ import Data.Proxy
 
 -- foo :: IxReader '["x" :-> a, "xs" :-> [a]] [a]
 foo = do x <- ask (Var::(Var "x"))
-         x' <- ask (Var::(Var "x"))
          xs <- ask (Var::(Var "xs"))
+         x' <- ask (Var::(Var "x"))
          return (x:x':xs)
 
 runFoo = runReader foo (Ext (Var :-> 1) (Ext (Var :-> [2, 3]) Empty))
 
 -- Examples with subeffecting (need to refine the types a bit to 'run')
 
-foo2 :: Sub '["x" :-> Int, "xs" :-> [Int]] t => IxReader t [Int]
+foo2 :: (Subset '["x" :-> Int, "xs" :-> [Int]] t) => IxReader t [Int]
 foo2 = sub foo
 
-runFoo2 = runReader foo2 (Ext ((Var::(Var "x")) :-> (1::Int)) (Ext ((Var::(Var "xs")) :-> ([2, 3]::[Int])) (Ext ((Var::(Var "z")) :-> undefined) Empty)))
+init0 :: Set '["x" :-> Int, "xs" :-> [Int], "z" :-> a]
+init0 = Ext (Var :-> 1) (Ext (Var :-> [2, 3]) (Ext (Var :-> undefined) Empty))
+
+runFoo2 = runReader foo2 init0
 
 

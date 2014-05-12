@@ -1,9 +1,8 @@
 {-# LANGUAGE DataKinds, KindSignatures, TypeOperators, RebindableSyntax, FlexibleInstances, 
-             ConstraintKinds, FlexibleContexts, TypeFamilies 
+             ConstraintKinds, FlexibleContexts, TypeFamilies, ScopedTypeVariables 
   #-}
 
 import Control.IxMonad
-import Control.IxMonad.Helpers.Set
 import Control.IxMonad.Writer
 
 import Data.Monoid
@@ -14,27 +13,36 @@ instance Monoid Int where
     mappend = (+)
     mempty  = 0
 
-test :: Writer '["x" :-> Int, "y" :-> String] ()
-test = do -- ...
-          put (Var::(Var "x")) (42::Int)
-          -- ...
-          put (Var::(Var "y")) "hello"
-          -- .....
-          put (Var::(Var "x")) (58::Int) -- update to 'x'
+var_x = Var::(Var "x")
+var_y = Var::(Var "y")
 
-instance Show (Var "x") where
-    show _ = "x"
+--test :: Writer '["x" :-> Int, "y" :-> String] ()
+test = do put var_x (42::Int)
+          put var_y "hello"
+          put var_x (58::Int)
+          put var_y " world"
 
-instance Show (Var "y") where
-    show _ = "y"
+--test' :: forall a . (Monoid a, Num a) => a -> Writer '["x" :-> a, "y" :-> String] ()
+test' (n::a) = do put var_x (42::a)
+                  put var_y "hello"
+                  put var_x (n::a)
+                  put var_y " world"
 
-foo :: (IsSet f, Unionable f '["x" :-> Int], Num a) => 
-       (a -> Writer f t) -> Writer (Union f '["x" :-> Int]) ()
-foo f = do y <- f 3
-           put (Var::(Var "x")) (42::Int)
+{-- Polymorphism test -}
+test2 :: (IsSet f, Unionable f '["y" :-> String]) => 
+         (Int -> Writer f t) -> Writer (Union f '["y" :-> String]) ()
+test2 f = do f 3 
+             put var_y ". hi"
+
+{-- Subeffecting test -}
+test3 :: Writer '["x" :-> Int, "y" :-> String, "z" :-> Int] ()
+test3 = sub (test2 test')
 
 foo2 :: (IsSet f, Unionable f '["x" :-> Int, "y" :-> t], Num a) => 
        (a -> Writer f t) -> Writer (Union f '["x" :-> Int, "y" :-> t]) ()
 foo2 f = do y <- f 3
-            put (Var::(Var "x")) (42::Int)
-            put (Var::(Var "y")) y
+            put var_x (42::Int)
+            put var_y y
+
+
+
