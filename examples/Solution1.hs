@@ -18,16 +18,17 @@ instance Show (Var "c1") where
 instance Show (Var "c2") where
     show _ = "c2"
 
-incSC :: Var v -> State '[v :-> Int :! RW] ()
-incSC var = do x <- get var
-               put var (x + 1)
+incC :: Var v -> State '[v :-> Int :! RW] ()
+incC var = do x <- get var
+              put var (x + 1)
 
+writeS :: [a] -> State '["out" :-> [a] :! RW] ()
 writeS y = do x <- get o_var
               put o_var (x ++ y)
 
-write ::  Show a => [a] -> State '["c1" :-> (Int :! 'RW), "out" :-> ([a] :! 'RW)] ()
+write ::  [a] -> State '["c1" :-> Int :! RW, "out" :-> ([a] :! RW)] ()
 write x = do  writeS x
-              incSC c1_var
+              incC c1_var
 
 initState0 = Ext (c1_var :-> ((0::Int) :! Eff)) (Ext (o_var :-> ("" :! Eff)) Empty)
 runWrite = runState (write "hello") initState0
@@ -43,7 +44,7 @@ initState = Ext (c1_var :-> ((0::Int) :! Eff)) (Ext (o_var :-> ("" :! Eff)) Empt
 runHellow = runState hellow initState
 
 hellowCount = do hellow
-                 incSC c2_var
+                 incC c2_var
 
 initState' = Ext (c1_var :-> ((0::Int) :! Eff)) (Ext (c2_var :-> ((1::Int) :! Eff)) (Ext (o_var :-> ("" :! Eff)) Empty))
 runHellowCount = runState hellowCount initState'

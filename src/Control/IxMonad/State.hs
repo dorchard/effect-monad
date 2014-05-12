@@ -48,16 +48,7 @@ type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (S
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = nub (bsort (append s t))
 
-{-
-
-{- Remove duplicates from a type-level list and turn different sorts into 'RW'
-   extends the previous definition from Set module -}
-type family Nub t where
-            Nub ((k :-> a :! s) ': (k :-> a :! s) ': as) = Nub ((k :-> a :! s) ': as)
-            Nub ((k :-> a :! s) ': (k :-> a :! t) ': as) = Nub ((k :-> a :! RW) ': as)
-            Nub t = Set.Nub t
-
--}
+{- Remove duplicates from a type-level list and turn different sorts into 'RW' -}
 
 type family Nub t where
     Nub '[]       = '[]
@@ -87,22 +78,6 @@ instance Nubable ((j :-> b :! t) ': as) as' =>
     Nubable ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
     nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
 
-{-
-class Nubable t where
-    nub :: Set t -> Set (Nub t)
-
-instance Nubable ((k :-> a :! s) ': as) => 
-           Nubable ((k :-> a :! s) ': (k :-> a :! s) ': as) where
-    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! Eff)) xs)
-
-instance Nubable ((k :-> a :! RW) ': as) => 
-           Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as) where
-    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
-
-instance (Nub t ~ Set.Nub t, Set.Nubable t) => Nubable t where
-    nub x = Set.nub x
--}
-
 
 {- Update reads, that is any writes are pushed into reads, a bit like intersection -}
 
@@ -122,16 +97,8 @@ instance UpdateReads ((k :-> b :! R) ': as) as' => UpdateReads ((k :-> a :! s) '
 instance UpdateReads ((k :-> a :! R) ': as) as' => UpdateReads ((k :-> a :! W) ': (k :-> b :! R) ': as) as' where
     updateReads (Ext (k :-> (a :! _)) (Ext _ xs)) = updateReads (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
 
+
 {-
-
-instance UpdateReads ((k :-> a :! R) ': as) as' => UpdateReads ((k :-> a :! W) ': (k :-> b :! RW) ': as) as' where
-    updateReads (Ext (k :-> (a :! _)) (Ext _ xs)) = updateReads (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
-
-instance UpdateReads ((k :-> a :! R) ': as) as' => UpdateReads ((k :-> a :! RW) ': (k :-> b :! W) ': as) as' where
-    updateReads (Ext (k :-> (a :! _)) (Ext _ xs)) = updateReads (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
--}
-
-
 instance UpdateReads ((k :-> b :! R) ': as) as' => UpdateReads ((k :-> a :! s) ': (k :-> b :! W) ': as) as' where
     updateReads (Ext _ (Ext (k :-> (b :! _)) xs)) = updateReads (Ext (k :-> (b :! (Eff::(Effect R)))) xs)
 
@@ -142,7 +109,7 @@ instance UpdateReads ((k :-> a :! R) ': as) as' => UpdateReads ((k :-> a :! RW) 
 
 instance UpdateReads ((k :-> b :! R) ': as) as' => UpdateReads ((k :-> a :! R) ': (k :-> b :! RW) ': as) as' where
     updateReads (Ext _ (Ext (k :-> (b :! _)) xs)) = updateReads (Ext (k :-> (b :! (Eff::(Effect R)))) xs)
-
+-}
 
 instance UpdateReads ((j :-> b :! s) ': as) as' => UpdateReads ((k :-> a :! W) ': (j :-> b :! s) ': as) as' where
     updateReads (Ext _ (Ext e xs)) = updateReads (Ext e xs)
@@ -225,30 +192,7 @@ instance IxMonad State where
                             Unionable (Writes s) (Writes t), 
                             Writesers s (Writes s), 
                             Intersectable (Writes s) (Reads t), 
-                            Writes (UnionS s t) ~ UnionS (Writes s) (Writes t),
-                         {-  Problem: 
-                               UnionS '[x :-> T :! R] `[x :-> T :! W] = '[x :-> T :! RW]
-                               Writes '[x :-> T :! RW] = '[x :-> T :! W]
-                               
-                               Writes '[x :-> T :! R] = '[]
-                               Writes '[x :-> T :! W] = '[x :-> T :! W]
-                               UnionS '[] '[x :-> T :! W] = '[x :-> T :! W]
-
-                               UnionS '[x :-> T :! W] `[x :-> T :! W] = '[x :-> T :! RW]
-                               Writes '[x :-> T :! RW] = '[x :-> T :! W]
-                               
-                               Writes '[x :-> T :! R] = '[]
-                               Writes '[x :-> T :! W] = '[x :-> T :! W]
-                               UnionS '[] '[x :-> T :! W] = '[x :-> T :! W]
-
-
-                                    
-
-
--}
-                         -- to remove
-                            Show (Set (AsSet (Writes s)))
-                         )
+                            Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
     type Unit State = '[]
     type Plus State s t = UnionS s t
 
@@ -257,7 +201,7 @@ instance IxMonad State where
     (State e) >>= k = 
         State $ \i -> let (sR, tR) = split i
                           (a, sW)  = e sR
-                          (b, tW) = ("trace: " ++ (show sW) ++ "\n") `trace` (runState $ k a) (sW `intersectReads` tR)
+                          (b, tW) = (runState $ k a) (sW `intersectReads` tR)
                       in  (b, sW `union` tW) 
 
 
@@ -281,3 +225,18 @@ instance Subeffect State where
 -- Equality proof between a set and a proxy
 data EqT a b where
     ReflP :: Proxy t -> Set t -> EqT t -}
+
+{-  Problem: 
+                               UnionS '[x :-> T :! R] `[x :-> T :! W] = '[x :-> T :! RW]
+                               Writes '[x :-> T :! RW] = '[x :-> T :! W]
+                               
+                               Writes '[x :-> T :! R] = '[]
+                               Writes '[x :-> T :! W] = '[x :-> T :! W]
+                               UnionS '[] '[x :-> T :! W] = '[x :-> T :! W]
+
+                               UnionS '[x :-> T :! W] `[x :-> T :! W] = '[x :-> T :! RW]
+                               Writes '[x :-> T :! RW] = '[x :-> T :! W]
+                               
+                               Writes '[x :-> T :! R] = '[]
+                               Writes '[x :-> T :! W] = '[x :-> T :! W]
+                               UnionS '[] '[x :-> T :! W] = '[x :-> T :! W] -}

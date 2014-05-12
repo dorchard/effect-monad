@@ -22,10 +22,10 @@ foo = do x <- return 2
          y <- return 4
          return (x + y)
 
-{- the 'one' function lifts a value to be counted once, e.g. -}
+{- the 'tick' function lifts a value to be counted once, e.g. -}
 
 -- foo2 :: Counter (S Z) Int
-foo2 = do x <- one 2
+foo2 = do x <- tick 2
           y <- return 3
           return (x * y)
 

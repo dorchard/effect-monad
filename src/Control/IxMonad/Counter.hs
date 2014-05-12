@@ -15,6 +15,7 @@ type instance n :+ Z     = n
 type instance n :+ (S m) = S (n :+ m)
 
 instance IxMonad Counter where
+    type Inv Counter n m = ()
     type Unit Counter = Z
     type Plus Counter n m = n :+ m
 
@@ -23,3 +24,6 @@ instance IxMonad Counter where
 
 tick :: a -> Counter (S Z) a
 tick x = Counter x
+
+instance Subeffect Counter where
+    
