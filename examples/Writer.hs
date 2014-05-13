@@ -16,7 +16,7 @@ instance Monoid Int where
 var_x = Var::(Var "x")
 var_y = Var::(Var "y")
 
---test :: Writer '["x" :-> Int, "y" :-> String] ()
+test :: Writer '["x" :-> Int, "y" :-> String] ()
 test = do put var_x (42::Int)
           put var_y "hello"
           put var_x (58::Int)

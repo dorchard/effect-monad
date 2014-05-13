@@ -25,5 +25,5 @@ instance IxMonad Counter where
 tick :: a -> Counter (S Z) a
 tick x = Counter x
 
-instance Subeffect Counter where
+-- instance Subeffect Counter s t where
     
