@@ -1,87 +1,55 @@
 {-# LANGUAGE TypeFamilies, GADTs, MultiParamTypeClasses, FlexibleInstances,
-             FlexibleContexts, DataKinds, UndecidableInstances #-}
+             FlexibleContexts, DataKinds, UndecidableInstances, ScopedTypeVariables #-}
 
 module ArrayReader where 
 
-import GHC.TypeLits hiding (Nat)
+import GHC.TypeLits 
 import Data.Array
+import Data.Proxy
 import Prelude hiding (Monad(..)) 
 import Control.IxMonad
 import Control.IxMonad.Helpers.Set
+import Control.IxMonad.Helpers.Mapping
 
 -- Array with a cursor
 data CArray (x::[*]) a = MkA (Array Int a, Int) 
 
 -- Computations from 'a' to 'b' with an array parameter
-data ArrayReader a (r::[*]) b = ArrayReader (CArray r a -> b)
+data Stencil a (r::[*]) b = Stencil (CArray r a -> b)
 
 -- Get the nth index from the array, relative to the 'cursor'
-ix :: IntT x -> ArrayReader a '[x] a
-ix n = ArrayReader (\(MkA (a, cursor)) -> a ! (cursor + toValue n))
+ix :: (ToValue (IntT x) Int) => IntT x -> Stencil a '[IntT x] a
+ix n = Stencil (\(MkA (a, cursor)) -> a ! (cursor + toValue n))
 
-instance IxMonad (ArrayReader a) where
-    type Inv (ArrayReader a) s t = ()
-    type Plus (ArrayReader a) s t = Union s t -- append specs
-    type Unit (ArrayReader a)     = '[]       -- empty spec
+instance IxMonad (Stencil a) where
+    type Inv (Stencil a) s t = ()
+    type Plus (Stencil a) s t = Union s t -- append specs
+    type Unit (Stencil a)     = '[]       -- empty spec
 
-    (ArrayReader f) >>= k = 
-        ArrayReader (\(MkA a) -> let (ArrayReader f') = k (f (MkA a))
+    (Stencil f) >>= k = 
+        Stencil (\(MkA a) -> let (Stencil f') = k (f (MkA a))
                                  in f' (MkA a))
-    return a = ArrayReader (\_ -> a)
+    return a = Stencil (\_ -> a)
 
-
--- Type-level integers
-data Z
-data S n 
-
-data Nat n where
-   Z :: Nat Z
-   S :: Nat n -> Nat (S n)
-
-natToInt :: Nat n -> Int
-natToInt Z = 0
-natToInt (S n) = 1 + natToInt n
-
-data Neg n
-
-data IntT n where
-   Neg :: Nat (S n) -> IntT (Neg (S n))
-   Pos :: Nat n -> IntT n
-
--- Note that zero is "positive"
-
-intTtoInt :: IntT n -> Int
-intTtoInt (Pos n) = natToInt n
-intTtoInt (Neg n) = - natToInt n
+data Sign n = Pos n | Neg n
+data IntT (n :: Sign Nat) = IntT
 
 class ToValue t t' where
     toValue :: t -> t'
 
-instance ToValue (Nat n) Int where
-    toValue n = natToInt n
+instance (KnownNat n) => ToValue (IntT (Pos (n :: Nat))) Int where
+    toValue _ = fromInteger $ natVal (Proxy :: (Proxy n))
 
-instance ToValue (IntT n) Int where
-    toValue n = intTtoInt n
+instance (KnownNat n) => ToValue (IntT (Neg (n :: Nat))) Int where
+    toValue _ = - (fromInteger $ natVal (Proxy :: (Proxy n)))
 
-instance (ToValue m Int, ToValue n Int) => ToValue (m, n) (Int, Int) where
-    toValue (m, n) = (toValue m, toValue n)
 
-type instance Min Z Z = Z 
-type instance Min Z (S n) = Z
-type instance Min (S n) Z = Z 
-type instance Min (S n) (S m) = S (Min n m)
-type instance Min Z (Neg m) = Neg m
-type instance Min (Neg m) Z  = Neg m
-type instance Min (S m) (Neg n) = Neg n
-type instance Min (Neg m) (S n) = Neg m
-type instance Min (Neg (S m)) (Neg (S n)) = Neg (S (Min m n))
+type instance Min (IntT (Pos n)) (IntT (Pos m)) = IntT (Pos (Choose (CmpNat n m) n m))
+type instance Min (IntT (Neg n)) (IntT (Neg m)) = IntT (Neg (Choose (CmpNat n m) m n))
+type instance Min (IntT (Pos n)) (IntT (Neg m)) = IntT (Neg m)
+type instance Min (IntT (Neg n)) (IntT (Pos m)) = IntT (Neg n)
 
-type instance Max Z Z = Z
-type instance Max Z (S n) = (S n)
-type instance Max (S n) Z = (S n)
-type instance Max (S n) (S m) = S (Max n m)
-type instance Max Z (Neg m) = Z
-type instance Max (Neg m) Z  = Z
-type instance Max (S m) (Neg n) = (S m)
-type instance Max (Neg m) (S n) = S n
-type instance Max (Neg (S m)) (Neg (S n)) = Neg (S (Max m n))
+type instance Max (IntT (Pos n)) (IntT (Pos m)) = IntT (Pos (Choose (CmpNat n m) m n))
+type instance Max (IntT (Neg n)) (IntT (Neg m)) = IntT (Neg (Choose (CmpNat n m) n m))
+type instance Max (IntT (Pos n)) (IntT (Neg m)) = IntT (Pos n)
+type instance Max (IntT (Neg n)) (IntT (Pos m)) = IntT (Pos m)

@@ -1,4 +1,4 @@
-{-# LANGUAGE RebindableSyntax, GADTs, TypeFamilies, DataKinds, TypeOperators #-}
+{-# LANGUAGE RebindableSyntax, GADTs, TypeFamilies, DataKinds, TypeOperators, UndecidableInstances #-}
 
 import Prelude hiding (Monad(..))
 
@@ -7,19 +7,18 @@ import Control.IxMonad.Helpers.Set
 import Control.IxMonad
 import ArrayReader
 
-localMean :: (Num a, Fractional a) => Stencil (Symmetrical (S Z)) a a
-localMean = Stencil $ 
-             do a <- ix (Pos Z)
-                b <- ix (Pos (S Z))
-                c <- ix (Neg (S Z))
-                return $ (a + b + c) / 3.0
+localMean :: (Num a, Fractional a) => Stencil a (Symmetrical 1) a
+--localMean :: (Num a, Fractional a) => Stencil a '[IntT (Neg 1), IntT (Pos 0), IntT (Pos 1)] a
+localMean = do a <- ix (IntT :: (IntT (Pos 0)))
+               b <- ix (IntT :: (IntT (Pos 1)))
+               c <- ix (Int :: (IntT (Neg 1)))
+               return $ (a + b + c) / 3.0
 
-
-fooFwd :: Num a => Stencil (Forward (S (S Z))) a a
-fooFwd = Stencil $ do a <- ix (Pos Z)
-                      b <- ix (Pos (S Z))
-                      c <- ix (Pos (S (S Z)))
-                      return $ a + b + c
+fooFwd :: Num a => Stencil a (Forward 2) a
+fooFwd = do a <- ix (IntT :: (IntT (Pos 0)))
+            b <- ix (IntT :: (IntT (Pos 1)))
+            c <- ix (IntT :: (IntT (Pos 2)))
+            return $ a + b + c
 
  {-
 --  The following causes a type error as it violates the specification
@@ -33,29 +32,26 @@ fooSymBroken = StencilM $ do a <- ix (Pos Z)
 
 -- fooFwd has a 'forward' pattern to depth of 2
 
-
-data Stencil r x y where
-    Stencil :: (ArrayReader x spec y) -> Stencil (Sort spec) x y
-
 -- Specification definitions
 
 -- Forward-oriented stencil specification
 
-type Forward sten = AsSet (Z ': (ForwardP sten))
+type Forward sten = AsSet ((IntT (Pos 0)) ': (ForwardP sten))
 
 -- ForwardP excludes the zero point
 type family ForwardP depth where
-            ForwardP Z     = '[]
-            ForwardP (S n) = (S n) ': (ForwardP n)
+            ForwardP 0 = '[]
+            ForwardP n = (IntT (Pos n)) ': (ForwardP (n - 1))
+
 
 -- Symmetrical stencils (derived from Forward and Backward stencils of the same depth)
 
-type Symmetrical depth = AsSet (Z ': (Append (ForwardP depth) (BackwardP depth)))
+type Symmetrical depth = AsSet ((IntT (Pos 0)) ': (Append (ForwardP depth) (BackwardP depth)))
 
 -- Backward-oriented stencils
 
-type Backward sten = AsSet (Z ': (BackwardP sten))
+type Backward sten = AsSet ((IntT (Pos 0)) ': (BackwardP sten))
 
 type family  BackwardP depth where
-             BackwardP Z     = '[]
-             BackwardP (S n) = (Neg (S n)) ': (BackwardP n)  
+             BackwardP 0 = '[]
+             BackwardP n = (IntT (Neg n)) ': (BackwardP (n - 1)) 
