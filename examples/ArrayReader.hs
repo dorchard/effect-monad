@@ -1,25 +1,28 @@
 {-# LANGUAGE TypeFamilies, GADTs, MultiParamTypeClasses, FlexibleInstances,
-             FlexibleContexts #-}
+             FlexibleContexts, DataKinds, UndecidableInstances #-}
 
 module ArrayReader where 
 
+import GHC.TypeLits hiding (Nat)
 import Data.Array
 import Prelude hiding (Monad(..)) 
 import Control.IxMonad
+import Control.IxMonad.Helpers.Set
 
 -- Array with a cursor
-data CArray x a = MkA (Array Int a, Int) 
+data CArray (x::[*]) a = MkA (Array Int a, Int) 
 
 -- Computations from 'a' to 'b' with an array parameter
-data ArrayReader a r b = ArrayReader (CArray r a -> b)
+data ArrayReader a (r::[*]) b = ArrayReader (CArray r a -> b)
 
 -- Get the nth index from the array, relative to the 'cursor'
-ix :: IntT x -> ArrayReader a (HCons x HNil) a
+ix :: IntT x -> ArrayReader a '[x] a
 ix n = ArrayReader (\(MkA (a, cursor)) -> a ! (cursor + toValue n))
 
 instance IxMonad (ArrayReader a) where
-    type Plus (ArrayReader a) s t = Append s t -- append specs
-    type Unit (ArrayReader a)     = HNil       -- empty spec
+    type Inv (ArrayReader a) s t = ()
+    type Plus (ArrayReader a) s t = Union s t -- append specs
+    type Unit (ArrayReader a)     = '[]       -- empty spec
 
     (ArrayReader f) >>= k = 
         ArrayReader (\(MkA a) -> let (ArrayReader f') = k (f (MkA a))
@@ -27,21 +30,7 @@ instance IxMonad (ArrayReader a) where
     return a = ArrayReader (\_ -> a)
 
 
--- Type-level lists
-
-type family Append s t
-type instance Append HNil t = t
-type instance Append (HCons s ss) t = HCons s (Append ss t)
-
-data HNil
-data HCons x xs
-
-data HList t where
-    HNil :: HList HNil
-    HCons :: x -> HList xs -> HList (HCons x xs)
-
 -- Type-level integers
-
 data Z
 data S n 
 
@@ -76,3 +65,23 @@ instance ToValue (IntT n) Int where
 
 instance (ToValue m Int, ToValue n Int) => ToValue (m, n) (Int, Int) where
     toValue (m, n) = (toValue m, toValue n)
+
+type instance Min Z Z = Z 
+type instance Min Z (S n) = Z
+type instance Min (S n) Z = Z 
+type instance Min (S n) (S m) = S (Min n m)
+type instance Min Z (Neg m) = Neg m
+type instance Min (Neg m) Z  = Neg m
+type instance Min (S m) (Neg n) = Neg n
+type instance Min (Neg m) (S n) = Neg m
+type instance Min (Neg (S m)) (Neg (S n)) = Neg (S (Min m n))
+
+type instance Max Z Z = Z
+type instance Max Z (S n) = (S n)
+type instance Max (S n) Z = (S n)
+type instance Max (S n) (S m) = S (Max n m)
+type instance Max Z (Neg m) = Z
+type instance Max (Neg m) Z  = Z
+type instance Max (S m) (Neg n) = (S m)
+type instance Max (Neg m) (S n) = S n
+type instance Max (Neg (S m)) (Neg (S n)) = Neg (S (Max m n))
