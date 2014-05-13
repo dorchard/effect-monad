@@ -10,9 +10,9 @@ about impurity and capture a greater class of effectul computations
 that normal monads.
 
 For more information, see talk slides and papers here: 
-http://www.cl.cam.ac.uk/~dao29/ixmonad/
+       http://www.cl.cam.ac.uk/~dao29/ixmonad/
 
 This is also available on hackage (http://hackage.haskell.org/package/ixmonad)
 so you can get this by doing:
 
-cabal install ixmonad
+       cabal install ixmonad
