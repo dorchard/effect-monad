@@ -1,8 +1,8 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax #-}
 
-module Control.IxMonad.Update where 
+module Control.Effect.Update where 
 
-import Control.IxMonad
+import Control.Effect
 import Data.HList hiding (Monad(..), append)
 import Prelude hiding (Monad(..))
 
@@ -10,7 +10,7 @@ data Put a = Put a deriving Show
 data NoPut = NoPut deriving Show
 
 -- Uupdate monad
-instance IxMonad (,) where -- i.e., m p a = (p, a)
+instance Effect (,) where -- i.e., m p a = (p, a)
     type Inv (,) s t = UpdateBind s t
 
     type Unit (,) = NoPut

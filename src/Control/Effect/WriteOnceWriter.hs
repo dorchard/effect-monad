@@ -1,15 +1,16 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, 
              TypeOperators, DataKinds, KindSignatures #-}
 
-module Control.IxMonad.WriteOnceWriter (put, WriteOnce(..)) where
+module Control.Effect.WriteOnceWriter (put, WriteOnce(..)) where
 
-import Control.IxMonad
-import Control.IxMonad.Helpers.List
+import Control.Effect
+import Control.Effect.Helpers.List
 import Prelude hiding (Monad(..))
 
 data WriteOnce (w :: [*]) a = W { runWriteOnce :: (a, List w) }
 
-instance IxMonad WriteOnce where
+instance Effect WriteOnce where
+    type Inv WriteOnce s t = ()
     type Unit WriteOnce = '[]
     type Plus WriteOnce s t = s :++ t
 

@@ -1,8 +1,8 @@
 {-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators #-}
 
-module Control.IxMonad.Counter(Z, S, Counter, tick, (:+)) where
+module Control.Effect.Counter(Z, S, Counter, tick, (:+)) where
 
-import Control.IxMonad
+import Control.Effect
 import Prelude hiding (Monad(..))
 
 data Z
@@ -14,7 +14,7 @@ type family n :+ m
 type instance n :+ Z     = n
 type instance n :+ (S m) = S (n :+ m)
 
-instance IxMonad Counter where
+instance Effect Counter where
     type Inv Counter n m = ()
     type Unit Counter = Z
     type Plus Counter n m = n :+ m

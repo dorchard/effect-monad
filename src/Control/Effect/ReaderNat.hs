@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs, 
              EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances #-}
 
-module Control.IxMonad.ReaderNat where
+module Control.Effect.ReaderNat where
 
-import Control.IxMonad
+import Control.Effect
 import Prelude hiding (Monad(..))
 
 -- Type-level list
@@ -64,7 +64,7 @@ data IxReader s a = IxR { unIxR :: List s -> a }
 
 -- Indexed monad instance
 
-instance IxMonad IxReader where
+instance Effect IxReader where
     type Inv IxReader s t = Split s t (Union s t)
 
     type Unit IxReader = Nil

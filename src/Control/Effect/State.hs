@@ -4,17 +4,17 @@
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
              InstanceSigs, IncoherentInstances #-}
 
-module Control.IxMonad.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
-                                  Eff(..), Effect(..), Var(..), union, UnionS, 
+module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
+                                  Eff(..), Action(..), Var(..), union, UnionS, 
                                      Reads(..), Writes(..), Unionable, Sortable, SetLike, 
                                       StateSet, 
                                           --- may not want to export these
                                           IntersectR, Update, Sort, Split) where
 
-import Control.IxMonad
-import Control.IxMonad.Helpers.Mapping 
-import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
-import qualified Control.IxMonad.Helpers.Set as Set
+import Control.Effect
+import Control.Effect.Helpers.Mapping 
+import Control.Effect.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
+import qualified Control.Effect.Helpers.Set as Set
 
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
@@ -24,18 +24,18 @@ import Debug.Trace
 -- Distinguish reads, writes, and read-writes
 data Eff = R | W | RW
 
-data Effect (s :: Eff) = Eff
+data Action (s :: Eff) = Eff
 
-instance Show (Effect R) where
+instance Show (Action R) where
     show _ = "R"
-instance Show (Effect W) where
+instance Show (Action W) where
     show _ = "W"
-instance Show (Effect RW) where
+instance Show (Action RW) where
     show _ = "RW"
 
-data (:!) (a :: *) (s :: Eff) = a :! (Effect s) 
+data (:!) (a :: *) (s :: Eff) = a :! (Action s) 
 
-instance (Show (Effect f), Show a) => Show (a :! f) where
+instance (Show (Action f), Show a) => Show (a :! f) where
     show (a :! f) = show a ++ " ! " ++ show f
 
 infixl 3 :!
@@ -72,7 +72,7 @@ instance Nubable ((k :-> b :! s) ': as) as' =>
 
 instance Nubable ((k :-> a :! RW) ': as) as' => 
     Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
-    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
+    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Action RW)))) xs)
 
 instance Nubable ((j :-> b :! t) ': as) as' => 
     Nubable ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
@@ -92,10 +92,10 @@ instance Update '[e] '[e] where
 
 
 instance Update ((k :-> b :! R) ': as) as' => Update ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
-    update (Ext _ (Ext (k :-> (b :! _)) xs)) = update (Ext (k :-> (b :! (Eff::(Effect R)))) xs) 
+    update (Ext _ (Ext (k :-> (b :! _)) xs)) = update (Ext (k :-> (b :! (Eff::(Action R)))) xs) 
 
 instance Update ((k :-> a :! R) ': as) as' => Update ((k :-> a :! W) ': (k :-> b :! R) ': as) as' where
-    update (Ext (k :-> (a :! _)) (Ext _ xs)) = update (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
+    update (Ext (k :-> (a :! _)) (Ext _ xs)) = update (Ext (k :-> (a :! (Eff::(Action R)))) xs)
 
 
 instance Update ((j :-> b :! s) ': as) as' => Update ((k :-> a :! W) ': (j :-> b :! s) ': as) as' where
@@ -143,7 +143,7 @@ type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
                              Unionable f '[], Unionable '[] f)
                    
 -- Indexed monad instance
-instance IxMonad State where
+instance Effect State where
     type Inv State s t = (IsSet s, IsSet (Reads s), IsSet (Writes s),
                           IsSet t, IsSet (Reads t), IsSet (Writes t),
                           Reads (Reads t) ~ Reads t, Writes (Writes s) ~ Writes s, 

@@ -3,8 +3,8 @@
 import Prelude hiding (Monad(..))
 
 import GHC.TypeLits hiding (Nat)
-import Control.IxMonad.Helpers.Set
-import Control.IxMonad
+import Control.Effect.Helpers.Set
+import Control.Effect
 import ArrayReader
 
 localMean :: (Num a, Fractional a) => Stencil (Symmetrical (S Z)) a a

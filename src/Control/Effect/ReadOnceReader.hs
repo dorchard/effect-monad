@@ -1,16 +1,16 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, DataKinds,
              TypeOperators #-}
 
-module Control.IxMonad.ReadOnceReader (ask,Reader(..)) where
+module Control.Effect.ReadOnceReader (ask,Reader(..),List(..)) where
 
-import Control.IxMonad
-import Control.IxMonad.Cond
-import Control.IxMonad.Helpers.List
+import Control.Effect
+import Control.Effect.Cond
+import Control.Effect.Helpers.List
 import Prelude    hiding (Monad(..))
 
 data Reader (r :: [*]) a = R { runReader :: (List r -> a) }
 
-instance IxMonad Reader where
+instance Effect Reader where
     type Inv Reader s t = Split s t
 
     type Unit Reader = '[]

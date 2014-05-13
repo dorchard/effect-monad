@@ -6,8 +6,8 @@ module ArrayReader where
 import GHC.TypeLits hiding (Nat)
 import Data.Array
 import Prelude hiding (Monad(..)) 
-import Control.IxMonad
-import Control.IxMonad.Helpers.Set
+import Control.Effect
+import Control.Effect.Helpers.Set
 
 -- Array with a cursor
 data CArray (x::[*]) a = MkA (Array Int a, Int) 
@@ -19,7 +19,7 @@ data ArrayReader a (r::[*]) b = ArrayReader (CArray r a -> b)
 ix :: IntT x -> ArrayReader a '[x] a
 ix n = ArrayReader (\(MkA (a, cursor)) -> a ! (cursor + toValue n))
 
-instance IxMonad (ArrayReader a) where
+instance Effect (ArrayReader a) where
     type Inv (ArrayReader a) s t = ()
     type Plus (ArrayReader a) s t = Union s t -- append specs
     type Unit (ArrayReader a)     = '[]       -- empty spec

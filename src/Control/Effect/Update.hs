@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, RebindableSyntax, 
              GADTs, EmptyDataDecls, DataKinds #-}
 
-module Control.IxMonad.Update where 
+module Control.Effect.Update where 
 
-import Control.IxMonad
+import Control.Effect
 import Prelude hiding (Monad(..))
 
 
@@ -14,7 +14,8 @@ data Eff (w :: Maybe *) where
 data Update w a = Update { runUpdate :: (a, Eff w) }
 
 -- Uupdate monad
-instance IxMonad Update where 
+instance Effect Update where 
+    type Inv Update s t = ()
     type Unit Update = Nothing
     type Plus Update s Nothing  = s
     type Plus Update s (Just t) = Just t

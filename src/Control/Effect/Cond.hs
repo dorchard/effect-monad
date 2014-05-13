@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies, ConstraintKinds, PolyKinds #-}
 
-module Control.IxMonad.Cond where
+module Control.Effect.Cond where
 
 import GHC.Prim
 

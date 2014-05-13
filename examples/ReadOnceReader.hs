@@ -1,9 +1,9 @@
 {-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Cond
-import Control.IxMonad.ReadOnceReader
+import Control.Effect
+import Control.Effect.Cond
+import Control.Effect.ReadOnceReader
 
 foo = do x <- ask
          y <- ask 
@@ -22,9 +22,9 @@ foo2' = do x <- ask
                      return (y:xs)
            return (x : xs')
 
-foo2_eval foo2 = foo2 (HCons' 'a' (HCons' 'b' (HCons' "c" HNil')))
+foo2_eval foo2 = runReader foo2 (Cons 'a' (Cons 'b' (Cons "c" Nil)))
 
 foo3 = do x <- ask
           ifM x ask (return 0)
 
-foo3_eval = foo3 (HCons' False (HCons' 42 HNil'))
+foo3_eval = runReader foo3 (Cons False (Cons 42 Nil))

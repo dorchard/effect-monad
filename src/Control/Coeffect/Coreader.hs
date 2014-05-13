@@ -1,11 +1,11 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs, 
              ConstraintKinds, TypeOperators, DataKinds, UndecidableInstances #-}
 
-module Control.IxComonad.Coreader where
+module Control.Coeffect.Coreader where
 
-import Control.IxComonad
-import Control.IxMonad.Helpers.Set
-import Control.IxMonad.Helpers.Mapping
+import Control.Coeffect
+import Control.Effect.Helpers.Set
+import Control.Effect.Helpers.Mapping
 
 -- Indexed reader type
 
@@ -13,7 +13,7 @@ data IxCoreader s a = IxR { runCoreader :: (a, Set s) }
 
 -- Indexed monad instance
 
-instance IxComonad IxCoreader where
+instance Coeffect IxCoreader where
     type Inv IxCoreader s t = (Unionable s t, Split s t (Union s t))
 
     type Unit IxCoreader = '[]
@@ -23,7 +23,7 @@ instance IxComonad IxCoreader where
     extend k (IxR (x, st)) = let (s, t) = split st
                              in IxR (k (IxR (x, t)), s)
 
-instance IxComonadZip IxCoreader where
+instance CoeffectZip IxCoreader where
     type Meet IxCoreader s t    = Union s t
     type CzipInv IxCoreader s t = (Unionable s t)
 

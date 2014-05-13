@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, RebindableSyntax #-}
 
-import Control.IxMonad
-import Control.IxMonad.Monad
+import Control.Effect
+import Control.Effect.Monad
 import Prelude hiding (Monad(..)) 
 
 putStrLn' = Wrap . putStrLn

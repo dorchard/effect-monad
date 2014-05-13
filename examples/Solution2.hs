@@ -2,9 +2,9 @@
               ConstraintKinds, FlexibleContexts, TypeFamilies #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Helpers.Set
-import Control.IxMonad.State
+import Control.Effect
+import Control.Effect.Helpers.Set
+import Control.Effect.State
 
 parMap :: (IsSet f, StateSet f, Writes f ~ '[]) => (a -> State f b) -> [a] -> State f [b] 
 -- parMap k [] = sub (return [])

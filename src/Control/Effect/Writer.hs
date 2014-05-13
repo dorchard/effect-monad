@@ -2,12 +2,12 @@
              MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, 
              ScopedTypeVariables, PolyKinds, FlexibleContexts, InstanceSigs #-}
 
-module Control.IxMonad.Writer(Writer(..), Symbol, put, (:->), IsSet, Set(..), union, Var(..), 
+module Control.Effect.Writer(Writer(..), Symbol, put, (:->), IsSet, Set(..), union, Var(..), 
                               Union, Unionable) where
 
-import Control.IxMonad 
-import Control.IxMonad.Helpers.Mapping
-import Control.IxMonad.Helpers.Set
+import Control.Effect 
+import Control.Effect.Helpers.Mapping
+import Control.Effect.Helpers.Set
 import Data.Monoid
 import Data.Proxy 
 import GHC.TypeLits
@@ -17,7 +17,7 @@ data Writer w a = Writer { runWriter :: (a, Set w) }
 
 {-- Writer effect-parameterised monad -}
 
-instance IxMonad Writer where
+instance Effect Writer where
     type Inv Writer s t = (IsSet s, IsSet t, Unionable s t)
 
     type Unit Writer = '[]

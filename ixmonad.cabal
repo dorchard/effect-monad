@@ -1,7 +1,7 @@
 name:                   ixmonad
 version:                0.50
-synopsis:               Indexed monads library
-description:            Provides the 'indexed monad' structure to Haskell with a number of indexed analogous of familiar monads (Reader, Writer, State, Maybe, Ticks) and a wrapper over normal monads (Control.IxMonad.Monad). For more information see <http://dorchard.co.uk/ixmonad>.
+synopsis:               Embeds effect systems into Haskell using an parameteric effect monad (the |Effect| type class)
+description:            Provides the 'parametric effect monad' structure to Haskell with a number of analogous of familiar monads (Reader, Writer, State, Maybe, Ticks) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see <http://dorchard.co.uk/ixmonad>.
 
 license:                BSD3
 license-file:           LICENSE
@@ -24,24 +24,24 @@ source-repository head
 library
   hs-source-dirs:       src
 
-  exposed-modules:      Control.IxComonad
-                        Control.IxComonad.Coreader
-                        Control.IxMonad
-                        Control.IxMonad.Cond
-                        Control.IxMonad.Counter
-                        Control.IxMonad.Maybe
-                        Control.IxMonad.Monad
-                        Control.IxMonad.Reader
-                        Control.IxMonad.ReaderNat
-                        Control.IxMonad.ReadOnceReader
-                        Control.IxMonad.State
-                        Control.IxMonad.Update
-                        Control.IxMonad.Vector
-                        Control.IxMonad.WriteOnceWriter
-                        Control.IxMonad.Writer
-                        Control.IxMonad.Helpers.List
-                        Control.IxMonad.Helpers.Mapping
-                        Control.IxMonad.Helpers.Set
+  exposed-modules:      Control.Coeffect
+                        Control.Coeffect.Coreader
+                        Control.Effect
+                        Control.Effect.Cond
+                        Control.Effect.Counter
+                        Control.Effect.Maybe
+                        Control.Effect.Monad
+                        Control.Effect.Reader
+                        Control.Effect.ReaderNat
+                        Control.Effect.ReadOnceReader
+                        Control.Effect.State
+                        Control.Effect.Update
+                        Control.Effect.Vector
+                        Control.Effect.WriteOnceWriter
+                        Control.Effect.Writer
+                        Control.Effect.Helpers.List
+                        Control.Effect.Helpers.Mapping
+                        Control.Effect.Helpers.Set
                         
   build-depends:        base < 5,
                         ghc-prim

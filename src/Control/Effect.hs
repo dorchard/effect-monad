@@ -1,8 +1,8 @@
 {-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses #-}
 
-module Control.IxMonad where 
+module Control.Effect where 
 
-import Control.IxMonad.Helpers.Set
+import Control.Effect.Helpers.Set
 import Prelude hiding (Monad(..))
 import Data.Proxy
 import GHC.Prim
@@ -13,7 +13,7 @@ type InvMain m f g = (Plus m (Unit m) f ~ f,
                       Plus m f (Plus m g h) ~ Plus m (Plus m f g) h)
 -}
 
-class IxMonad (m :: k -> * -> *) where
+class Effect (m :: k -> * -> *) where
 
    type Unit m :: k
    type Plus m (f :: k) (g :: k) :: k

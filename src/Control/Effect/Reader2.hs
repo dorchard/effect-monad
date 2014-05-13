@@ -1,12 +1,12 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 
-module Control.IxMonad.Reader2 (HNil(..), HCons(..), ask, Split(..)) where
+module Control.Effect.Reader2 (HNil(..), HCons(..), ask, Split(..)) where
 
-import Control.IxMonad
+import Control.Effect
 import Data.HList hiding (Monad(..))
 import Prelude    hiding (Monad(..))
 
-instance IxMonad (->) where
+instance Effect (->) where
     type Inv (->) s t = Split s t
 
     type Unit (->) = HNil

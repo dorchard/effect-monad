@@ -2,7 +2,7 @@
              MultiParamTypeClasses, FlexibleInstances, PolyKinds, FlexibleContexts,
              UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
 
-module Control.IxMonad.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
+module Control.Effect.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
                                     OrdH(..), Min, Max, Append(..), Split(..), 
                                     Nub, Nubable(..), 
                                     AsSet, asSet, IsSet, 

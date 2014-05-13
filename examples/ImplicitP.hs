@@ -1,8 +1,8 @@
 {-# LANGUAGE ImplicitParams, DataKinds, RebindableSyntax, TypeOperators #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Reader
+import Control.Effect
+import Control.Effect.Reader
 
 foo :: (Num a, ?x :: a, ?y :: a) => a -> a
 foo z = ?x + ?y

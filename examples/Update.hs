@@ -1,8 +1,8 @@
-{-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction #-}
+{-# LANGUAGE RebindableSyntax, DataKinds #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Update
+import Control.Effect
+import Control.Effect.Update
 
 foo :: Update (Just String) ()
 foo = do put 42

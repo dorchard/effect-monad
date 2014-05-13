@@ -1,8 +1,8 @@
 {-# LANGUAGE RebindableSyntax, EmptyDataDecls, GADTs, TypeFamilies, UndecidableInstances, MultiParamTypeClasses, TypeOperators #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Counter
+import Control.Effect
+import Control.Effect.Counter
 
 import Debug.Trace
 

@@ -1,9 +1,9 @@
 {-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Cond
-import Control.IxMonad.Maybe
+import Control.Effect
+import Control.Effect.Cond
+import Control.Effect.Maybe
 
 headM x = ifM (x == []) (INothing) (IJust (head x))
 

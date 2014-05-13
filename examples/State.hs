@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds, RebindableSyntax, TypeOperators, FlexibleInstances #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.State
+import Control.Effect
+import Control.Effect.State
 
 x_var = Var::(Var "x")
 y_var = Var::(Var "y")

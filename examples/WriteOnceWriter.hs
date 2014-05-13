@@ -1,8 +1,8 @@
 {-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.WriteOnceWriter 
+import Control.Effect
+import Control.Effect.WriteOnceWriter 
 
 foo = do put 42
          put "hello"

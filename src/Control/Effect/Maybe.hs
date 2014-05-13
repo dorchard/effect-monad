@@ -1,11 +1,11 @@
 {-# LANGUAGE EmptyDataDecls, TypeFamilies, GADTs #-}
 
-module Control.IxMonad.Maybe where
+module Control.Effect.Maybe where
 
 import Prelude hiding (Monad(..))
 
-import Control.IxMonad
-import Control.IxMonad.Cond
+import Control.Effect
+import Control.Effect.Cond
 
 data F 
 data T 
@@ -21,7 +21,7 @@ instance Show a => Show (IMaybe p a) where
     show (IJust a) = "Just " ++ show a
     show (IDyn a)  = show a
 
-instance IxMonad IMaybe where
+instance Effect IMaybe where
   type Unit IMaybe = T
 
   type Plus IMaybe F s = F -- conjunction

@@ -1,14 +1,14 @@
 {-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, DataKinds #-}
 
-module Control.IxMonad.CatIndexed where
+module Control.Effect.CatIndexed where
 
-import Control.IxMonad
+import Control.Effect
 
 newtype M (i :: Morph * *) a = M a
 
 data Morph a b = M a b | Id
 
-instance IxMonad (M :: ((Morph * *) -> * -> *)) where
+instance Effect (M :: ((Morph * *) -> * -> *)) where
     type Unit M = Id
     type Plus M (M a b) (M c d) = M a d
     type Plus M Id (M a b) = M a b

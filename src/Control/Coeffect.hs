@@ -9,11 +9,11 @@ http://www.cl.cam.ac.uk/~dao29/publ/coeffects-icalp13.pdf
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ConstraintKinds, PolyKinds, ScopedTypeVariables, DataKinds #-}
 
-module Control.IxComonad where 
+module Control.Coeffect where 
 
 import GHC.Prim
 
-class IxComonad (c :: k -> * -> *) where
+class Coeffect (c :: k -> * -> *) where
     type Inv c (s :: k) (t :: k) :: Constraint
     type Inv c s t = ()
 
@@ -23,7 +23,7 @@ class IxComonad (c :: k -> * -> *) where
     extract :: c (Unit c) a -> a
     extend :: Inv c s t => (c t a -> b) -> c (Plus c s t) a -> c s b
 
-class IxComonadZip (c :: k -> * -> *) where
+class CoeffectZip (c :: k -> * -> *) where
     type Meet c (s :: k) (t :: k) :: k
     type CzipInv c (s :: k) (t :: k) :: Constraint
     czip :: CzipInv c s t => c s a -> c t b -> c (Meet c s t) (a, b)

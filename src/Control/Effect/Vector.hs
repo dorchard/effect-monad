@@ -1,9 +1,9 @@
 {-# LANGUAGE GADTs, TypeFamilies, EmptyDataDecls, UndecidableInstances, MultiParamTypeClasses, TypeSynonymInstances, FlexibleContexts #-}
 
-module Control.IxMonad.Vector where
+module Control.Effect.Vector where
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
+import Control.Effect
 
 -- Sized-vector type
 
@@ -24,7 +24,7 @@ append :: Vector n a -> Vector m a -> Vector (Add n m) a
 append Nil         ys = ys
 append (Cons x xs) ys = Cons x (append xs ys)
 
-instance IxMonad Vector where
+instance Effect Vector where
     -- Effect monoid is (N, *, 1)
     type Inv Vector s t = ()
 
