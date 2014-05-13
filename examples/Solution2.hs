@@ -14,10 +14,8 @@ parMap k (x:xs) = do y  <- k x
                      ys <- parMap k xs
                      return (y : ys)
 
-{-
 
 parMap2 :: (StateSet f, Writes f ~ '[]) => (a -> State f b) -> [a] -> State f [b] 
 parMap2 k [] = sub (return [])
-parMap2 k (x:xs) = do y  <- k x
-                      ys <- parMap2 k xs
-                      return (y : ys)-}
+parMap2 k (x:xs) = do (y, ys)  <- (k x) `par` parMap2 k xs
+                      return (y : ys)
