@@ -19,13 +19,12 @@ class Effect (m :: k -> * -> *) where
    type Inv m (f :: k) (g :: k) :: Constraint
    type Inv m f g = ()
 
-{-| Effect-parameterised version of 'return'. 
-    'return' is annotated with the 'Unit m' effect, denoting pure compuation |-}
+   {-| Effect-parameterised version of 'return'. Annotated with the 'Unit m' effect, 
+    denoting pure compuation |-}
    return :: a -> m (Unit m) a
 
-{-| Effect-parameterise version of '>>='(bind).
-    '>>=' has two effect annotations 'f' and 'g' on its parameter computations
-          which get combined in the result by 'Plus m f g' |-}
+   {-| Effect-parameterise version of '>>='(bind). Combines 
+    two effect annotations 'f' and 'g' on its parameter computations into 'Plus m f g' |-}
    (>>=) :: (Inv m f g) => m f a -> (a -> m g b) -> m (Plus m f g) b
 
    (>>) :: (Inv m f g) => m f a -> m g b -> m (Plus m f g) b

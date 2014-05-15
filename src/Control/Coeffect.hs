@@ -22,13 +22,13 @@ class Coeffect (c :: k -> * -> *) where
     type Unit c :: k 
     type Plus c (s :: k) (t :: k) :: k
 
-{-| Coeffect-parameterised version of 'extract'. 
-    'return' is annotated with the 'Unit m' effect, denoting pure contexts |-}
+    {-| Coeffect-parameterised version of 'extract', 
+         annotated with the 'Unit m' effect, denoting pure contexts |-}
     extract :: c (Unit c) a -> a
 
-{-| Coeffect-parameterise version of 'extend'.
-    'extend' has two effect annotations 'f' and 'g' on its parameter computations
-          which get combined in the result by 'Plus m s t' |-}
+    {-| Coeffect-parameterise version of 'extend'.
+        The two coeffec annotations 'f' and 'g' on its parameter computations
+          get combined in the result by 'Plus m s t' |-}
     extend :: Inv c s t => (c t a -> b) -> c (Plus c s t) a -> c s b
 
 {-| "Zips" two coeffecting computations together |-}
