@@ -10,7 +10,7 @@ import Prelude hiding (Monad(..))
 
 import Control.Effect
 import Control.Effect.Helpers.Set
-import Control.Effect.Helpers.Mappings
+import Control.Effect.Helpers.Mapping
 
 -- Array with a cursor
 data CArray (x::[*]) a = MkA (Array Int a, Int) 

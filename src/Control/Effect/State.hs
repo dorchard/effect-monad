@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,  
              UndecidableInstances, RebindableSyntax,  DataKinds, 
-             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds 
+             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds, 
+             OverlappingInstances, IncoherentInstances 
              #-}
 
 module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),

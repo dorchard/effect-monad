@@ -24,6 +24,7 @@ instance Show a => Show (IMaybe p a) where
     show (IDyn a)  = show a
 
 instance Effect IMaybe where
+  type Inv IMaybe s t = ()
   type Unit IMaybe = T
 
   type Plus IMaybe F s = F -- conjunction
@@ -41,6 +42,8 @@ instance Effect IMaybe where
   (IDyn (INothing)) >>= k = IDyn INothing 
   
 instance Cond IMaybe where
+    type AltInv IMaybe s t = ()
+
     type Alt IMaybe T T = T
     type Alt IMaybe F F = F
 
