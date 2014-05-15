@@ -7,6 +7,8 @@ import Prelude hiding (Monad(..))
 import Control.Effect
 import Control.Effect.Cond
 
+{- Provides an indexed version of the |Maybe| monad -}
+
 data F 
 data T 
 data U

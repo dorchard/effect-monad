@@ -1,5 +1,5 @@
 name:                   ixmonad
-version:                0.50
+version:                0.51
 synopsis:               Embeds effect systems into Haskell using an parameteric effect monad (the |Effect| type class)
 description:            Provides the 'parametric effect monad' structure to Haskell with a number of analogous of familiar monads (Reader, Writer, State, Maybe, Ticks) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see <http://dorchard.co.uk/ixmonad>.
 
@@ -29,10 +29,11 @@ library
                         Control.Effect
                         Control.Effect.Cond
                         Control.Effect.Counter
+                        Control.Effect.CounterNat
                         Control.Effect.Maybe
                         Control.Effect.Monad
+                        Control.Effect.Parameterised
                         Control.Effect.Reader
-                        Control.Effect.ReaderNat
                         Control.Effect.ReadOnceReader
                         Control.Effect.State
                         Control.Effect.Update

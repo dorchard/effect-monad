@@ -1,8 +1,7 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs, 
-             EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances, 
-             DataKinds, TypeOperators, PolyKinds, NoMonomorphismRestriction, FlexibleContexts,
-             AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
-             InstanceSigs, IncoherentInstances #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,  
+             UndecidableInstances, RebindableSyntax,  DataKinds, 
+             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds 
+             #-}
 
 module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
                                   Eff(..), Action(..), Var(..), union, UnionS, 
@@ -18,12 +17,15 @@ import qualified Control.Effect.Helpers.Set as Set
 
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
-import Data.Proxy
-import Debug.Trace
 
--- Distinguish reads, writes, and read-writes
+{- Provides an effect-parameterised version of the state monad, which gives an 
+   effect system for stateful computations with annotations that are sets of 
+   variable-type-action triples. -}
+
+
+{-| Distinguish reads, writes, and read-writes |-}
 data Eff = R | W | RW
-
+{-| Provides a wrapper for effect actions |-}
 data Action (s :: Eff) = Eff
 
 instance Show (Action R) where
@@ -33,6 +35,7 @@ instance Show (Action W) where
 instance Show (Action RW) where
     show _ = "RW"
 
+{-| Describes an effect action 's' on a value of type 'a' |-}
 data (:!) (a :: *) (s :: Eff) = a :! (Action s) 
 
 instance (Show (Action f), Show a) => Show (a :! f) where
@@ -45,11 +48,11 @@ type UnionS s t = Nub (Sort (Append s t))
 type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (Sort (Append s t))),
                       Split s t (Union s t))
 
+{-| Union operation for state effects |-}
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = nub (bsort (append s t))
 
-{- Remove duplicates from a type-level list and turn different sorts into 'RW' -}
-
+{-| Type-level remove duplicates from a type-level list and turn different sorts into 'RW'| -}
 type family Nub t where
     Nub '[]       = '[]
     Nub '[e]      = '[e]
@@ -57,6 +60,7 @@ type family Nub t where
     Nub ((k :-> a :! s) ': (k :-> a :! t) ': as) = Nub ((k :-> a :! RW) ': as)
     Nub (e ': f ': as) = e ': Nub (f ': as)
 
+{-| Value-level remove duplicates from a type-level list and turn different sorts into 'RW'| -}
 class Nubable t v where
     nub :: Set t -> Set v
 
@@ -79,8 +83,7 @@ instance Nubable ((j :-> b :! t) ': as) as' =>
     nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
 
 
-{- Update reads, that is any writes are pushed into reads, a bit like intersection -}
-
+{-| Update reads, that is any writes are pushed into reads, a bit like intersection |-}
 class Update t v where
     update :: Set t -> Set v
 
@@ -106,36 +109,38 @@ instance Update ((j :-> b :! s) ': as) as' => Update ((k :-> a :! R) ': (j :-> b
 
 type IntersectR s t = (Sortable (Append s t), Update (Sort (Append s t)) t)
 
+{-| Intersects a set of write effects and a set of read effects, updating any read effects with
+    any corresponding write value |-}
 intersectR :: (Reads t ~ t, Writes s ~ s, IsSet s, IsSet t, IntersectR s t) => Set s -> Set t -> Set t
 intersectR s t = update (bsort (append s t))
 
--- Effect-parameterised state type
-
+{-| Parametric effect state monad |-}
 data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }
 
+{-| Calculate just the reader effects |-}
 type family Reads t where
     Reads '[]                    = '[]
     Reads ((k :-> a :! R) ': xs)  = (k :-> a :! R) ': (Reads xs)
     Reads ((k :-> a :! RW) ': xs) = (k :-> a :! R) ': (Reads xs)
     Reads ((k :-> a :! W) ': xs)  = Reads xs
 
+{-| Calculate just the writer effects |-}
 type family Writes t where
     Writes '[]                     = '[]
     Writes ((k :-> a :! W) ': xs)  = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! RW) ': xs) = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! R) ': xs)  = Writes xs
 
--- 'get/put' monadic primitives
+{-| Read from a variable 'v' of type 'a'. Raise a read effect. |-}
+get :: Var v -> State '[v :-> a :! R] a
+get _ = State $ \(Ext (v :-> (a :! _)) Empty) -> (a, Empty)
 
-get :: Var k -> State '[k :-> a :! R] a
-get _ = State $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
-
-put :: Var k -> a -> State '[k :-> a :! W] ()
+{-| Write to a variable 'v' with a value of type 'a'. Raises a write effect |-}
+put :: Var v -> a -> State '[k :-> a :! W] ()
 put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
-
+{-| Captures what it means to be a set of state effects |-}
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
-                   
 type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
                              UnionS f '[] ~ f, Split f '[] f, 
                              UnionS '[] f ~ f, Split '[] f f, 
@@ -151,7 +156,11 @@ instance Effect State where
                             Unionable (Writes s) (Writes t), 
                             IntersectR (Writes s) (Reads t), 
                             Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
+
+    {-| Pure state effect is the empty state |-}
     type Unit State = '[]
+    {-| Combine state effects via specialised union (which combines R and W effects on the same
+      variable into RW effects |-}
     type Plus State s t = UnionS s t
 
     return x = State $ \Empty -> (x, Empty)

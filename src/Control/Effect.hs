@@ -7,21 +7,25 @@ import Prelude hiding (Monad(..))
 import Data.Proxy
 import GHC.Prim
 
-{-
-type InvMain m f g = (Plus m (Unit m) f ~ f,
-                      Plus m f (Unit m) ~ f) 
-                      Plus m f (Plus m g h) ~ Plus m (Plus m f g) h)
--}
 
+{-| Specifies "parametric effect monads" which are essentially monads but
+     annotated by a type-level monoid formed by |Plus m| and |Unit m| |-}
 class Effect (m :: k -> * -> *) where
 
    type Unit m :: k
    type Plus m (f :: k) (g :: k) :: k
 
+   {-| 'Inv' provides a way to give instances of 'Effect' their own constraints for |>>=| |-}
    type Inv m (f :: k) (g :: k) :: Constraint
    type Inv m f g = ()
 
+{-| Effect-parameterised version of 'return'. 
+    'return' is annotated with the 'Unit m' effect, denoting pure compuation |-}
    return :: a -> m (Unit m) a
+
+{-| Effect-parameterise version of '>>='(bind).
+    '>>=' has two effect annotations 'f' and 'g' on its parameter computations
+          which get combined in the result by 'Plus m f g' |-}
    (>>=) :: (Inv m f g) => m f a -> (a -> m g b) -> m (Plus m f g) b
 
    (>>) :: (Inv m f g) => m f a -> m g b -> m (Plus m f g) b
@@ -29,5 +33,6 @@ class Effect (m :: k -> * -> *) where
   
 fail = undefined
 
+{-| Specifies subeffecting behaviour |-}
 class Subeffect (m :: k -> * -> *) f g where
     sub :: m f a -> m g a

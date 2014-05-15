@@ -7,11 +7,9 @@ import Control.Coeffect
 import Control.Effect.Helpers.Set
 import Control.Effect.Helpers.Mapping
 
--- Indexed reader type
-
+{-| Provides 'reader monad'-like behaviour but as a comonad, using an indexed
+    version of the product comonad |-}
 data IxCoreader s a = IxR { runCoreader :: (a, Set s) }
-
--- Indexed monad instance
 
 instance Coeffect IxCoreader where
     type Inv IxCoreader s t = (Unionable s t, Split s t (Union s t))
@@ -29,8 +27,8 @@ instance CoeffectZip IxCoreader where
 
     czip (IxR (a, s)) (IxR (b, t)) = IxR ((a, b), union s t)
 
--- 'ask' monadic primitive
 
+{-| 'ask' for the value of variable 'v', e.g., 'ask (Var::(Var "x"))' |-}
 ask :: Var v -> IxCoreader '[v :-> a] b -> a
 ask _ = \(IxR (_, Ext (Var :-> a) Empty)) -> a
 
