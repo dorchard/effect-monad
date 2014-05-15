@@ -2,27 +2,25 @@
 
 module Control.Effect.Monad where
 
-{-
-All monads are parametric effect monads with a trivial singleton-monoid index. 
-
-This wrapper wraps normal monads into the Effect interface using the 'M' contructor.
-
--}
-
 import Control.Effect
 import Prelude hiding (Monad(..))
 import qualified Prelude as P
 
-{-| Wrap regular monads up |-}
+
+{-| All monads are parametric effect monads with a trivial singleton-monoid index. 
+This wrapper wraps normal monads into the Effect interface using the 'M' contructor.
+-}
+
+{-| Wrap regular monads up -}
 data Monad m t a where
     Wrap :: P.Monad m => m a -> Monad m () a
 
-{-| Unwrap a monad |-}
+{-| Unwrap a monad -}
 unWrap :: P.Monad m => Monad m t a -> m a
 unWrap (Wrap m) = m
 
 instance (P.Monad m) => Effect (Monad m) where
-    {-| Trivial singleton monoid |-}
+    {-| Trivial singleton monoid -}
     type Inv (Monad m) s t    = ()
     type Unit (Monad m)       = ()
     type Plus (Monad m) s t   = ()

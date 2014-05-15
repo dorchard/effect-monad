@@ -6,7 +6,7 @@ module Control.Effect.Update where
 import Control.Effect
 import Prelude hiding (Monad(..))
 
-{- Parametric effect update monad. A bit like a writer monad specialised to the 'Maybe' monoid, 
+{-| Parametric effect update monad. A bit like a writer monad specialised to the 'Maybe' monoid, 
    providing a single memory cell that can be updated, but with heterogeneous behaviour. 
    Provides an effect system that explains whether a single memory cell has been updated or not -}
 
@@ -31,6 +31,6 @@ instance Effect Update where
              update w (b, NoPut)   = (b, w)
              update _ (b, Put w'') = (b, Put w'')
 
-{-| Update the memory cell with a new value of type 'a' |-}
+{-| Update the memory cell with a new value of type 'a' -}
 put :: a -> Update (Just a) ()
 put x = Update ((), Put x)

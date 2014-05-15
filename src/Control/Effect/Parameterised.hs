@@ -2,16 +2,16 @@
 
 module Control.Effect.Parameterised where
 
-{- Implements Bob Atkey's 'parametric monads', 
+import Control.Effect
+
+{-| Implements Bob Atkey's 'parametric monads', 
     and also the Control.Monad.Indexed package, by emulating
     indexing by morphisms -}
 
-import Control.Effect
-
-{-| Data type of morphisms |-}
+{-| Data type of morphisms -}
 newtype T (i :: Morph * *) a = T a
 
-{-| Data type denoting either a morphisms with source and target types, or identity |-}
+{-| Data type denoting either a morphisms with source and target types, or identity -}
 data Morph a b = M a b | Id
 
 instance Effect (T :: ((Morph * *) -> * -> *)) where

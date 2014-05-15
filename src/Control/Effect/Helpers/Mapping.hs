@@ -6,7 +6,8 @@ module Control.Effect.Helpers.Mapping where
 
 import Control.Effect.Helpers.Set
 import GHC.TypeLits
-import Data.Proxy
+
+data Proxy (a :: k) = Proxy
 
 infixl 2 :->
 data (k :: Symbol) :-> (v :: *) = (Var k) :-> v

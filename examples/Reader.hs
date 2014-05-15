@@ -5,7 +5,6 @@ import Control.Effect
 import Control.Effect.Reader
 
 import GHC.TypeLits
-import Data.Proxy
 
 {- Examples -}
 

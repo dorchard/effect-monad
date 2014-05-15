@@ -19,14 +19,14 @@ import qualified Control.Effect.Helpers.Set as Set
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 
-{- Provides an effect-parameterised version of the state monad, which gives an 
+{-| Provides an effect-parameterised version of the state monad, which gives an 
    effect system for stateful computations with annotations that are sets of 
    variable-type-action triples. -}
 
 
-{-| Distinguish reads, writes, and read-writes |-}
+{-| Distinguish reads, writes, and read-writes -}
 data Eff = R | W | RW
-{-| Provides a wrapper for effect actions |-}
+{-| Provides a wrapper for effect actions -}
 data Action (s :: Eff) = Eff
 
 instance Show (Action R) where
@@ -36,7 +36,7 @@ instance Show (Action W) where
 instance Show (Action RW) where
     show _ = "RW"
 
-{-| Describes an effect action 's' on a value of type 'a' |-}
+{-| Describes an effect action 's' on a value of type 'a' -}
 data (:!) (a :: *) (s :: Eff) = a :! (Action s) 
 
 instance (Show (Action f), Show a) => Show (a :! f) where
@@ -49,7 +49,7 @@ type UnionS s t = Nub (Sort (Append s t))
 type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (Sort (Append s t))),
                       Split s t (Union s t))
 
-{-| Union operation for state effects |-}
+{-| Union operation for state effects -}
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = nub (bsort (append s t))
 
@@ -84,7 +84,7 @@ instance Nubable ((j :-> b :! t) ': as) as' =>
     nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
 
 
-{-| Update reads, that is any writes are pushed into reads, a bit like intersection |-}
+{-| Update reads, that is any writes are pushed into reads, a bit like intersection -}
 class Update t v where
     update :: Set t -> Set v
 
@@ -111,36 +111,36 @@ instance Update ((j :-> b :! s) ': as) as' => Update ((k :-> a :! R) ': (j :-> b
 type IntersectR s t = (Sortable (Append s t), Update (Sort (Append s t)) t)
 
 {-| Intersects a set of write effects and a set of read effects, updating any read effects with
-    any corresponding write value |-}
+    any corresponding write value -}
 intersectR :: (Reads t ~ t, Writes s ~ s, IsSet s, IsSet t, IntersectR s t) => Set s -> Set t -> Set t
 intersectR s t = update (bsort (append s t))
 
-{-| Parametric effect state monad |-}
+{-| Parametric effect state monad -}
 data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }
 
-{-| Calculate just the reader effects |-}
+{-| Calculate just the reader effects -}
 type family Reads t where
     Reads '[]                    = '[]
     Reads ((k :-> a :! R) ': xs)  = (k :-> a :! R) ': (Reads xs)
     Reads ((k :-> a :! RW) ': xs) = (k :-> a :! R) ': (Reads xs)
     Reads ((k :-> a :! W) ': xs)  = Reads xs
 
-{-| Calculate just the writer effects |-}
+{-| Calculate just the writer effects -}
 type family Writes t where
     Writes '[]                     = '[]
     Writes ((k :-> a :! W) ': xs)  = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! RW) ': xs) = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! R) ': xs)  = Writes xs
 
-{-| Read from a variable 'v' of type 'a'. Raise a read effect. |-}
+{-| Read from a variable 'v' of type 'a'. Raise a read effect. -}
 get :: Var v -> State '[v :-> a :! R] a
 get _ = State $ \(Ext (v :-> (a :! _)) Empty) -> (a, Empty)
 
-{-| Write to a variable 'v' with a value of type 'a'. Raises a write effect |-}
+{-| Write to a variable 'v' with a value of type 'a'. Raises a write effect -}
 put :: Var v -> a -> State '[k :-> a :! W] ()
 put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
-{-| Captures what it means to be a set of state effects |-}
+{-| Captures what it means to be a set of state effects -}
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
 type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
                              UnionS f '[] ~ f, Split f '[] f, 
@@ -158,10 +158,10 @@ instance Effect State where
                             IntersectR (Writes s) (Reads t), 
                             Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
 
-    {-| Pure state effect is the empty state |-}
+    {-| Pure state effect is the empty state -}
     type Unit State = '[]
     {-| Combine state effects via specialised union (which combines R and W effects on the same
-      variable into RW effects |-}
+      variable into RW effects -}
     type Plus State s t = UnionS s t
 
     return x = State $ \Empty -> (x, Empty)

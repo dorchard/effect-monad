@@ -5,7 +5,6 @@ module ArrayReader where
 
 import GHC.TypeLits 
 import Data.Array
-import Data.Proxy
 import Prelude hiding (Monad(..)) 
 
 import Control.Effect
