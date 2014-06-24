@@ -94,11 +94,12 @@ instance Update xs '[] where
 instance Update '[e] '[e] where 
     update s = s
 
+{-
 instance Update ((v :-> b :! R) ': as) as' => Update ((v :-> a :! s) ': (v :-> b :! s) ': as) as' where
-    update (Ext _ (Ext (v :-> (b :! _)) xs)) = update (Ext (v :-> (b :! (Eff::(Effect R)))) xs) 
+    update (Ext _ (Ext (v :-> (b :! _)) xs)) = update (Ext (v :-> (b :! (Eff::(Action R)))) xs) -}
 
 instance Update ((v :-> a :! R) ': as) as' => Update ((v :-> a :! W) ': (v :-> b :! R) ': as) as' where
-    update (Ext (v :-> (a :! _)) (Ext _ xs)) = update (Ext (v :-> (a :! (Eff::(Effect R)))) xs)
+    update (Ext (v :-> (a :! _)) (Ext _ xs)) = update (Ext (v :-> (a :! (Eff::(Action R)))) xs)
 
 instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! W) ': (u :-> b :! s) ': as) as' where
     update (Ext _ (Ext e xs)) = update (Ext e xs)
