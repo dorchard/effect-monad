@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs, DataKinds, KindSignatures, TypeOperators, TypeFamilies, 
              MultiParamTypeClasses, FlexibleInstances #-}
 
-module Control.IxMonad.Helpers.List where
+module Control.Effect.Helpers.List where
 
 data List (l::[*]) where
     Nil   :: List '[]

@@ -1,41 +1,45 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs, 
-             EmptyDataDecls, UndecidableInstances, RebindableSyntax, OverlappingInstances, 
-             DataKinds, TypeOperators, PolyKinds, NoMonomorphismRestriction, FlexibleContexts,
-             AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies, ConstraintKinds, 
-             InstanceSigs, IncoherentInstances #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,  
+             UndecidableInstances, RebindableSyntax,  DataKinds, 
+             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds, 
+             OverlappingInstances, IncoherentInstances 
+             #-}
 
-module Control.IxMonad.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
-                                  Eff(..), Effect(..), Var(..), union, UnionS, 
+module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
+                                  Eff(..), Action(..), Var(..), union, UnionS, 
                                      Reads(..), Writes(..), Unionable, Sortable, SetLike, 
                                       StateSet, 
                                           --- may not want to export these
                                           IntersectR, Update, Sort, Split) where
 
-import Control.IxMonad
-import Control.IxMonad.Helpers.Mapping 
-import Control.IxMonad.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
-import qualified Control.IxMonad.Helpers.Set as Set
+import Control.Effect
+import Control.Effect.Helpers.Mapping 
+import Control.Effect.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
+import qualified Control.Effect.Helpers.Set as Set
 
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
-import Data.Proxy
-import Debug.Trace
 
--- Distinguish reads, writes, and read-writes
+{-| Provides an effect-parameterised version of the state monad, which gives an 
+   effect system for stateful computations with annotations that are sets of 
+   variable-type-action triples. -}
+
+
+{-| Distinguish reads, writes, and read-writes -}
 data Eff = R | W | RW
+{-| Provides a wrapper for effect actions -}
+data Action (s :: Eff) = Eff
 
-data Effect (s :: Eff) = Eff
-
-instance Show (Effect R) where
+instance Show (Action R) where
     show _ = "R"
-instance Show (Effect W) where
+instance Show (Action W) where
     show _ = "W"
-instance Show (Effect RW) where
+instance Show (Action RW) where
     show _ = "RW"
 
-data (:!) (a :: *) (s :: Eff) = a :! (Effect s) 
+{-| Describes an effect action 's' on a value of type 'a' -}
+data (:!) (a :: *) (s :: Eff) = a :! (Action s) 
 
-instance (Show (Effect f), Show a) => Show (a :! f) where
+instance (Show (Action f), Show a) => Show (a :! f) where
     show (a :! f) = show a ++ " ! " ++ show f
 
 infixl 3 :!
@@ -45,11 +49,11 @@ type UnionS s t = Nub (Sort (Append s t))
 type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (Sort (Append s t))),
                       Split s t (Union s t))
 
+{-| Union operation for state effects -}
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
 union s t = nub (bsort (append s t))
 
-{- Remove duplicates from a type-level list and turn different sorts into 'RW' -}
-
+{-| Type-level remove duplicates from a type-level list and turn different sorts into 'RW'| -}
 type family Nub t where
     Nub '[]       = '[]
     Nub '[e]      = '[e]
@@ -57,6 +61,7 @@ type family Nub t where
     Nub ((k :-> a :! s) ': (k :-> a :! t) ': as) = Nub ((k :-> a :! RW) ': as)
     Nub (e ': f ': as) = e ': Nub (f ': as)
 
+{-| Value-level remove duplicates from a type-level list and turn different sorts into 'RW'| -}
 class Nubable t v where
     nub :: Set t -> Set v
 
@@ -72,15 +77,14 @@ instance Nubable ((k :-> b :! s) ': as) as' =>
 
 instance Nubable ((k :-> a :! RW) ': as) as' => 
     Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
-    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Effect RW)))) xs)
+    nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Action RW)))) xs)
 
 instance Nubable ((j :-> b :! t) ': as) as' => 
     Nubable ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
     nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
 
 
-{- Update reads, that is any writes are pushed into reads, a bit like intersection -}
-
+{-| Update reads, that is any writes are pushed into reads, a bit like intersection -}
 class Update s t where
     update :: Set s -> Set t
 
@@ -90,13 +94,11 @@ instance Update xs '[] where
 instance Update '[e] '[e] where 
     update s = s
 
-
 instance Update ((v :-> b :! R) ': as) as' => Update ((v :-> a :! s) ': (v :-> b :! s) ': as) as' where
     update (Ext _ (Ext (v :-> (b :! _)) xs)) = update (Ext (v :-> (b :! (Eff::(Effect R)))) xs) 
 
 instance Update ((v :-> a :! R) ': as) as' => Update ((v :-> a :! W) ': (v :-> b :! R) ': as) as' where
     update (Ext (v :-> (a :! _)) (Ext _ xs)) = update (Ext (v :-> (a :! (Eff::(Effect R)))) xs)
-
 
 instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! W) ': (u :-> b :! s) ': as) as' where
     update (Ext _ (Ext e xs)) = update (Ext e xs)
@@ -106,36 +108,38 @@ instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! R) ': (u :-> b
 
 type IntersectR s t = (Sortable (Append s t), Update (Sort (Append s t)) t)
 
+{-| Intersects a set of write effects and a set of read effects, updating any read effects with
+    any corresponding write value -}
 intersectR :: (Reads t ~ t, Writes s ~ s, IsSet s, IsSet t, IntersectR s t) => Set s -> Set t -> Set t
 intersectR s t = update (bsort (append s t))
 
--- Effect-parameterised state type
-
+{-| Parametric effect state monad -}
 data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }
 
+{-| Calculate just the reader effects -}
 type family Reads t where
     Reads '[]                    = '[]
     Reads ((k :-> a :! R) ': xs)  = (k :-> a :! R) ': (Reads xs)
     Reads ((k :-> a :! RW) ': xs) = (k :-> a :! R) ': (Reads xs)
     Reads ((k :-> a :! W) ': xs)  = Reads xs
 
+{-| Calculate just the writer effects -}
 type family Writes t where
     Writes '[]                     = '[]
     Writes ((k :-> a :! W) ': xs)  = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! RW) ': xs) = (k :-> a :! W) ': (Writes xs)
     Writes ((k :-> a :! R) ': xs)  = Writes xs
 
--- 'get/put' monadic primitives
+{-| Read from a variable 'v' of type 'a'. Raise a read effect. -}
+get :: Var v -> State '[v :-> a :! R] a
+get _ = State $ \(Ext (v :-> (a :! _)) Empty) -> (a, Empty)
 
-get :: Var k -> State '[k :-> a :! R] a
-get _ = State $ \(Ext (k :-> (a :! _)) Empty) -> (a, Empty)
-
-put :: Var k -> a -> State '[k :-> a :! W] ()
+{-| Write to a variable 'v' with a value of type 'a'. Raises a write effect -}
+put :: Var v -> a -> State '[k :-> a :! W] ()
 put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
-
+{-| Captures what it means to be a set of state effects -}
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
-                   
 type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
                              UnionS f '[] ~ f, Split f '[] f, 
                              UnionS '[] f ~ f, Split '[] f f, 
@@ -143,7 +147,7 @@ type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
                              Unionable f '[], Unionable '[] f)
                    
 -- Indexed monad instance
-instance IxMonad State where
+instance Effect State where
     type Inv State s t = (IsSet s, IsSet (Reads s), IsSet (Writes s),
                           IsSet t, IsSet (Reads t), IsSet (Writes t),
                           Reads (Reads t) ~ Reads t, Writes (Writes s) ~ Writes s, 
@@ -151,7 +155,11 @@ instance IxMonad State where
                             Unionable (Writes s) (Writes t), 
                             IntersectR (Writes s) (Reads t), 
                             Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
+
+    {-| Pure state effect is the empty state -}
     type Unit State = '[]
+    {-| Combine state effects via specialised union (which combines R and W effects on the same
+      variable into RW effects -}
     type Plus State s t = UnionS s t
 
     return x = State $ \Empty -> (x, Empty)

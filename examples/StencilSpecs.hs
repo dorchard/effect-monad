@@ -3,15 +3,15 @@
 import Prelude hiding (Monad(..))
 
 import GHC.TypeLits hiding (Nat)
-import Control.IxMonad.Helpers.Set
-import Control.IxMonad
+import Control.Effect.Helpers.Set
+import Control.Effect
 import ArrayReader
 
 localMean :: (Num a, Fractional a) => Stencil a (Symmetrical 1) a
 --localMean :: (Num a, Fractional a) => Stencil a '[IntT (Neg 1), IntT (Pos 0), IntT (Pos 1)] a
 localMean = do a <- ix (IntT :: (IntT (Pos 0)))
                b <- ix (IntT :: (IntT (Pos 1)))
-               c <- ix (Int :: (IntT (Neg 1)))
+               c <- ix (IntT :: (IntT (Neg 1)))
                return $ (a + b + c) / 3.0
 
 fooFwd :: Num a => Stencil a (Forward 2) a

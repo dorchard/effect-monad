@@ -3,9 +3,9 @@
              DataKinds, TypeOperators, PolyKinds, NoMonomorphismRestriction, FlexibleContexts,
              AllowAmbiguousTypes, ScopedTypeVariables, FunctionalDependencies #-}
 
-module Control.IxMonad.State where
+module Control.Effect.State where
 
-import Control.IxMonad
+import Control.Effect
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 import Data.Proxy
@@ -161,7 +161,7 @@ x >>= f :: [a, b] -> (c, [b, d])
 
 -- Indexed monad instance
 
-instance IxMonad IxState where
+instance Effect IxState where
     type Inv IxState s t = (Bubbler (Append' (Writes s) (Writes t)), 
                             RemDuper (Bubble (Append' (Writes s) (Writes t)))
                                      (Union (Writes s) (Writes t)),

@@ -1,12 +1,13 @@
 {-# LANGUAGE DataKinds, RebindableSyntax, TypeOperators, FlexibleInstances #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.State
+import Control.Effect
+import Control.Effect.State
 
 x_var = Var::(Var "x")
 y_var = Var::(Var "y")
 
+{- Computation with a read effect on variable "x" and a read-write (update) effect on variable "y" -}
 foo :: State '["x" :-> Int :! R, "y" :-> [Int] :! RW] [Int]
 foo = do x <- get x_var
          y <- get y_var

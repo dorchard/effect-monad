@@ -2,8 +2,8 @@
               RebindableSyntax, FlexibleInstances #-}
 
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.State
+import Control.Effect
+import Control.Effect.State
 
 c1_var = Var::(Var "c1")
 c2_var = Var::(Var "c2")

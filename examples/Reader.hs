@@ -1,12 +1,10 @@
 {-# LANGUAGE RebindableSyntax, NoMonomorphismRestriction, DataKinds, TypeOperators, 
    FlexibleContexts, ConstraintKinds #-}
 import Prelude hiding (Monad(..))
-import Control.IxMonad
-import Control.IxMonad.Reader
-import Control.IxMonad.Helpers.Set
+import Control.Effect
+import Control.Effect.Reader
 
 import GHC.TypeLits
-import Data.Proxy
 
 {- Examples -}
 

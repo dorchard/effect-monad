@@ -2,8 +2,8 @@
              ConstraintKinds, FlexibleContexts, TypeFamilies, ScopedTypeVariables
   #-}
 
-import Control.IxMonad
-import Control.IxMonad.Writer
+import Control.Effect
+import Control.Effect.Writer
 
 import Data.Monoid
 

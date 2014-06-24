@@ -5,11 +5,11 @@ module ArrayReader where
 
 import GHC.TypeLits 
 import Data.Array
-import Data.Proxy
 import Prelude hiding (Monad(..)) 
-import Control.IxMonad
-import Control.IxMonad.Helpers.Set
-import Control.IxMonad.Helpers.Mapping
+
+import Control.Effect
+import Control.Effect.Helpers.Set
+import Control.Effect.Helpers.Mapping
 
 -- Array with a cursor
 data CArray (x::[*]) a = MkA (Array Int a, Int) 
@@ -21,7 +21,7 @@ data Stencil a (r::[*]) b = Stencil (CArray r a -> b)
 ix :: (ToValue (IntT x) Int) => IntT x -> Stencil a '[IntT x] a
 ix n = Stencil (\(MkA (a, cursor)) -> a ! (cursor + toValue n))
 
-instance IxMonad (Stencil a) where
+instance Effect (Stencil a) where
     type Inv (Stencil a) s t = ()
     type Plus (Stencil a) s t = Union s t -- append specs
     type Unit (Stencil a)     = '[]       -- empty spec
