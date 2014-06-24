@@ -81,8 +81,8 @@ instance Nubable ((j :-> b :! t) ': as) as' =>
 
 {- Update reads, that is any writes are pushed into reads, a bit like intersection -}
 
-class Update t v where
-    update :: Set t -> Set v
+class Update s t where
+    update :: Set s -> Set t
 
 instance Update xs '[] where
     update _ = Empty
@@ -91,17 +91,17 @@ instance Update '[e] '[e] where
     update s = s
 
 
-instance Update ((k :-> b :! R) ': as) as' => Update ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
-    update (Ext _ (Ext (k :-> (b :! _)) xs)) = update (Ext (k :-> (b :! (Eff::(Effect R)))) xs) 
+instance Update ((v :-> b :! R) ': as) as' => Update ((v :-> a :! s) ': (v :-> b :! s) ': as) as' where
+    update (Ext _ (Ext (v :-> (b :! _)) xs)) = update (Ext (v :-> (b :! (Eff::(Effect R)))) xs) 
 
-instance Update ((k :-> a :! R) ': as) as' => Update ((k :-> a :! W) ': (k :-> b :! R) ': as) as' where
-    update (Ext (k :-> (a :! _)) (Ext _ xs)) = update (Ext (k :-> (a :! (Eff::(Effect R)))) xs)
+instance Update ((v :-> a :! R) ': as) as' => Update ((v :-> a :! W) ': (v :-> b :! R) ': as) as' where
+    update (Ext (v :-> (a :! _)) (Ext _ xs)) = update (Ext (v :-> (a :! (Eff::(Effect R)))) xs)
 
 
-instance Update ((j :-> b :! s) ': as) as' => Update ((k :-> a :! W) ': (j :-> b :! s) ': as) as' where
+instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! W) ': (u :-> b :! s) ': as) as' where
     update (Ext _ (Ext e xs)) = update (Ext e xs)
 
-instance Update ((j :-> b :! s) ': as) as' => Update ((k :-> a :! R) ': (j :-> b :! s) ': as) ((k :-> a :! R) ': as') where
+instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! R) ': (u :-> b :! s) ': as) ((v :-> a :! R) ': as') where
     update (Ext e (Ext e' xs)) = Ext e $ update (Ext e' xs)
 
 type IntersectR s t = (Sortable (Append s t), Update (Sort (Append s t)) t)

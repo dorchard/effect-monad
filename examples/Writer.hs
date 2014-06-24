@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds, KindSignatures, TypeOperators, RebindableSyntax, FlexibleInstances, 
-             ConstraintKinds, FlexibleContexts, TypeFamilies, ScopedTypeVariables 
+             ConstraintKinds, FlexibleContexts, TypeFamilies, ScopedTypeVariables
   #-}
 
 import Control.IxMonad
