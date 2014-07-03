@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTs, DataKinds, KindSignatures, TypeOperators, TypeFamilies, 
              MultiParamTypeClasses, FlexibleInstances, PolyKinds, FlexibleContexts,
-             UndecidableInstances, IncoherentInstances, ConstraintKinds #-}
+             UndecidableInstances, ConstraintKinds #-}
 
 module Control.Effect.Helpers.Set (Set(..), Union, Unionable, union, bsort, append, Sort, Sortable, 
                                     OrdH(..), Min, Max, Append(..), Split(..), 
