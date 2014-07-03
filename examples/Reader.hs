@@ -14,16 +14,19 @@ foo = do x <- ask (Var::(Var "x"))
          x' <- ask (Var::(Var "x"))
          return (x:x':xs)
 
-runFoo = runReader foo (Ext (Var :-> 1) (Ext (Var :-> [2, 3]) Empty))
+init1 = Ext (Var :-> 1) (Ext (Var :-> [2, 3]) Empty)
+runFoo = runReader foo init1
 
 -- Examples with subeffecting (need to refine the types a bit to 'run')
 
-foo2 :: (Subset '["x" :-> Int, "xs" :-> [Int]] t) => Reader t [Int]
-foo2 = sub foo
+bar :: (Subset '["x" :-> Int, "xs" :-> [Int]] t) => Reader t [Int]
+bar = sub foo
 
-init0 :: Set '["x" :-> Int, "xs" :-> [Int], "z" :-> a]
-init0 = Ext (Var :-> 1) (Ext (Var :-> [2, 3]) (Ext (Var :-> undefined) Empty))
+init2 :: Set '["x" :-> Int, "xs" :-> [Int], "z" :-> a]
+init2 =  Ext (Var :-> 1) (Ext (Var :-> [2, 3]) (Ext (Var :-> undefined) Empty))
+runBar = runReader bar init2
 
-runFoo2 = runReader foo2 init0
+-- Note: GHC currently has trouble with
+-- init2 = asSet (append init1 (Ext (Var :-> undefined) Empty))
 
 

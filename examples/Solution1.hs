@@ -26,7 +26,7 @@ writeS :: [a] -> State '["out" :-> [a] :! RW] ()
 writeS y = do x <- get o_var
               put o_var (x ++ y)
 
-write ::  [a] -> State '["c1" :-> Int :! RW, "out" :-> ([a] :! RW)] ()
+write ::  [a] -> State '["c1" :-> Int :! RW, "out" :-> [a] :! RW] ()
 write x = do  writeS x
               incC c1_var
 

@@ -24,6 +24,7 @@ source-repository head
 library
   hs-source-dirs:       src
 
+
   exposed-modules:      Control.Coeffect
                         Control.Coeffect.Coreader
                         Control.Effect
