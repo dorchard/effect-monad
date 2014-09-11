@@ -4,8 +4,7 @@
 module Control.Coeffect.Coreader where
 
 import Control.Coeffect
-import Control.Effect.Helpers.Set
-import Control.Effect.Helpers.Mapping
+import Data.Type.Set
 
 {-| Provides 'reader monad'-like behaviour but as a comonad, using an indexed
     version of the product comonad -}

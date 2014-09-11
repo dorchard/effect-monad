@@ -6,8 +6,7 @@ module Control.Effect.Writer(Writer(..), Symbol, put, (:->), IsSet, Set(..), uni
                               Union, Unionable) where
 
 import Control.Effect 
-import Control.Effect.Helpers.Mapping
-import Control.Effect.Helpers.Set
+import Data.Type.Set
 import Data.Monoid
 import GHC.TypeLits
 import Prelude hiding (Monad(..))

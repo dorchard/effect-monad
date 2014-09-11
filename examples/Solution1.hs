@@ -37,9 +37,6 @@ hellow = do write "hello"
             write " "
             write "world"
 
-
-{-
-
 initState = Ext (c1_var :-> ((0::Int) :! Eff)) (Ext (o_var :-> ("" :! Eff)) Empty)
 runHellow = runState hellow initState
 
@@ -48,5 +45,3 @@ hellowCount = do hellow
 
 initState' = Ext (c1_var :-> ((0::Int) :! Eff)) (Ext (c2_var :-> ((1::Int) :! Eff)) (Ext (o_var :-> ("" :! Eff)) Empty))
 runHellowCount = runState hellowCount initState'
-
---}

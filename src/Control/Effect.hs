@@ -2,7 +2,6 @@
 
 module Control.Effect where 
 
-import Control.Effect.Helpers.Set
 import Prelude hiding (Monad(..))
 import GHC.Prim
 

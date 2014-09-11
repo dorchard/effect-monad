@@ -5,8 +5,7 @@
 module Control.Effect.Reader (Reader(..), ask, merge, (:->)(..), Var(..), Subset, Set(..)) where
 
 import Control.Effect
-import Control.Effect.Helpers.Set
-import Control.Effect.Helpers.Mapping
+import Data.Type.Set
 import Prelude hiding (Monad(..))
 import GHC.TypeLits
 import GHC.Prim
@@ -42,3 +41,8 @@ merge k = IxR $ \s -> \a -> IxR $ \t -> runReader (k a) (union s t)
 instance Subset s t => Subeffect Reader s t where
     sub (IxR e) = IxR $ \st -> let s = subset st in e s
 
+{-
+{-| Define the operation for removing duplicates using mappend -}
+instance (Nubable (e ': s)) => Nubable (e ': e ': s) where
+    nub (Ext _ (Ext x xs)) = nub (Ext x xs)
+-}

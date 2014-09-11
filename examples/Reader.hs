@@ -27,6 +27,14 @@ init2 =  Ext (Var :-> 1) (Ext (Var :-> [2, 3]) (Ext (Var :-> undefined) Empty))
 runBar = runReader bar init2
 
 -- Note: GHC currently has trouble with
--- init2 = asSet (append init1 (Ext (Var :-> undefined) Empty))
+--init2a = asSet (append init1 (Ext (Var :-> undefined) Empty))
 
+{-
+foo_b = do x <- ask (Var::(Var "x"))
+           y <- ask (Var::(Var "x"))
+           return (not x,not y)
 
+foo_b = 
+-}
+
+-- runFoob = runReader foo_b (Ext (Var :-> 1) (Ext (Var :-> [1,2,3]) Empty))

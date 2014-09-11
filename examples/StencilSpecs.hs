@@ -3,7 +3,7 @@
 import Prelude hiding (Monad(..))
 
 import GHC.TypeLits hiding (Nat)
-import Control.Effect.Helpers.Set
+import Data.Type.Set
 import Control.Effect
 import ArrayReader
 

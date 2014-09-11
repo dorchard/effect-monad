@@ -3,8 +3,9 @@
 
 import Prelude hiding (Monad(..))
 import Control.Effect
-import Control.Effect.Helpers.Set
+import Data.Type.Set
 import Control.Effect.State
+import GHC.Conc.Sync
 
 parMap :: (IsSet f, StateSet f, Writes f ~ '[]) => (a -> State f b) -> [a] -> State f [b] 
 -- parMap k [] = sub (return [])

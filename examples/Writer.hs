@@ -44,5 +44,3 @@ foo2 f = do y <- f 3
             put var_x (42::Int)
             put var_y y
 
-
-

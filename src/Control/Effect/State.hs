@@ -12,9 +12,8 @@ module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
                                           IntersectR, Update, Sort, Split) where
 
 import Control.Effect
-import Control.Effect.Helpers.Mapping 
-import Control.Effect.Helpers.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
-import qualified Control.Effect.Helpers.Set as Set
+import Data.Type.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
+import qualified Data.Type.Set as Set
 
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
@@ -51,7 +50,7 @@ type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (S
 
 {-| Union operation for state effects -}
 union :: (Unionable s t) => Set s -> Set t -> Set (UnionS s t)
-union s t = nub (bsort (append s t))
+union s t = nub (quicksort (append s t))
 
 {-| Type-level remove duplicates from a type-level list and turn different sorts into 'RW'| -}
 type family Nub t where
@@ -112,7 +111,7 @@ type IntersectR s t = (Sortable (Append s t), Update (Sort (Append s t)) t)
 {-| Intersects a set of write effects and a set of read effects, updating any read effects with
     any corresponding write value -}
 intersectR :: (Reads t ~ t, Writes s ~ s, IsSet s, IsSet t, IntersectR s t) => Set s -> Set t -> Set t
-intersectR s t = update (bsort (append s t))
+intersectR s t = update (quicksort (append s t))
 
 {-| Parametric effect state monad -}
 data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }

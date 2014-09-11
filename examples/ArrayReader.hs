@@ -7,9 +7,9 @@ import GHC.TypeLits
 import Data.Array
 import Prelude hiding (Monad(..)) 
 
+import Data.Proxy
 import Control.Effect
-import Control.Effect.Helpers.Set
-import Control.Effect.Helpers.Mapping
+import Data.Type.Set
 
 -- Array with a cursor
 data CArray (x::[*]) a = MkA (Array Int a, Int) 
@@ -43,13 +43,8 @@ instance (KnownNat n) => ToValue (IntT (Pos (n :: Nat))) Int where
 instance (KnownNat n) => ToValue (IntT (Neg (n :: Nat))) Int where
     toValue _ = - (fromInteger $ natVal (Proxy :: (Proxy n)))
 
+type instance Cmp (IntT (Pos n)) (IntT (Pos m)) = CmpNat n m
+type instance Cmp (IntT (Neg n)) (IntT (Neg m)) = CmpNat n m
+type instance Cmp (IntT (Pos n)) (IntT (Neg m)) = GT
+type instance Cmp (IntT (Neg n)) (IntT (Pos m)) = LT
 
-type instance Min (IntT (Pos n)) (IntT (Pos m)) = IntT (Pos (Choose (CmpNat n m) n m))
-type instance Min (IntT (Neg n)) (IntT (Neg m)) = IntT (Neg (Choose (CmpNat n m) m n))
-type instance Min (IntT (Pos n)) (IntT (Neg m)) = IntT (Neg m)
-type instance Min (IntT (Neg n)) (IntT (Pos m)) = IntT (Neg n)
-
-type instance Max (IntT (Pos n)) (IntT (Pos m)) = IntT (Pos (Choose (CmpNat n m) m n))
-type instance Max (IntT (Neg n)) (IntT (Neg m)) = IntT (Neg (Choose (CmpNat n m) n m))
-type instance Max (IntT (Pos n)) (IntT (Neg m)) = IntT (Pos n)
-type instance Max (IntT (Neg n)) (IntT (Pos m)) = IntT (Pos m)
