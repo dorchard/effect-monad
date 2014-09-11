@@ -13,7 +13,7 @@ For more information, see talk slides and papers here:
        http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf
        http://www.cl.cam.ac.uk/~dao29/talks/haskell14-orchard-petricek-effects.pdf
 
-This is also available on hackage (http://hackage.haskell.org/package/ixmonad)
+This is also available on hackage (http://hackage.haskell.org/package/effect-monad)
 so you can get this by doing:
 
        cabal install effect-monad
