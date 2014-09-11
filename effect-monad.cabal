@@ -1,8 +1,10 @@
-name:                   ixmonad
+name:                   effect-monad
 version:                0.6
 synopsis:               Embeds effect systems into Haskell using parameteric effect monads
 description:            
-   Provides the 'parametric effect monad' structure to Haskell with a number of analogous of familiar monads (Reader, Writer, State, Maybe, Counter, Update) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see my paper with Tomas Petricek <http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf> (Haskell, 2014) and the examples in <https://github.com/dorchard/effect-monad/tree/master/examples>. 
+   Provides the 'parametric effect monad' structure to Haskell with a number of analogous of familiar monads (Reader, Writer, State, Maybe, Counter, Update) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see with paper \"Embedding effect systems in Haskell\" by Orchard and Petricek <http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf> (Haskell, 2014) and the examples in <https://github.com/dorchard/effect-monad/tree/master/examples>. 
+  .
+  (note, this package was previously called 'ixmonad' until September 2014). 
 
 license:                BSD3
 license-file:           LICENSE
@@ -20,7 +22,7 @@ extra-source-files:     examples/*.hs
 
 source-repository head
   type: git
-  location: https://github.com/dorchard/ixmonad
+  location: https://github.com/dorchard/effect-monad
 
 library
   hs-source-dirs:       src
