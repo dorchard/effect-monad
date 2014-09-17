@@ -135,7 +135,7 @@ get :: Var v -> State '[v :-> a :! R] a
 get _ = State $ \(Ext (v :-> (a :! _)) Empty) -> (a, Empty)
 
 {-| Write to a variable 'v' with a value of type 'a'. Raises a write effect -}
-put :: Var v -> a -> State '[k :-> a :! W] ()
+put :: Var v -> a -> State '[v :-> a :! W] ()
 put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
 {-| Captures what it means to be a set of state effects -}
