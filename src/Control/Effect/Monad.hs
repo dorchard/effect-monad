@@ -12,11 +12,11 @@ This wrapper wraps normal monads into the Effect interface using the 'M' contruc
 -}
 
 {-| Wrap regular monads up -}
-data Monad m t a where
+data Monad m f a where
     Wrap :: P.Monad m => m a -> Monad m () a
 
 {-| Unwrap a monad -}
-unWrap :: P.Monad m => Monad m t a -> m a
+unWrap :: P.Monad m => Monad m f a -> m a
 unWrap (Wrap m) = m
 
 instance (P.Monad m) => Effect (Monad m) where

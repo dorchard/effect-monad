@@ -25,6 +25,7 @@ class Effect (m :: k -> * -> *) where
 
    {-| Effect-parameterise version of '>>=' (bind). Combines 
     two effect annotations 'f' and 'g' on its parameter computations into 'Plus' -}
+
    (>>=) :: (Inv m f g) => m f a -> (a -> m g b) -> m (Plus m f g) b
 
    (>>) :: (Inv m f g) => m f a -> m g b -> m (Plus m f g) b

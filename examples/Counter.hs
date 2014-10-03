@@ -39,9 +39,9 @@ data Vector n a where
     Nil :: Vector Z a
     Cons :: a -> Vector n a -> Vector (S n) a
 
-type family n :* m 
-type instance Z :* m = Z
-type instance (S n) :* m = m :+ (n :* m)
+type family n :* m where
+            Z     :* m = Z
+            (S n) :* m = m :+ (n :* m)
 
 {- map' is then defined as follows -}
 
@@ -64,6 +64,9 @@ singleCall = map' call (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))
 doubleCall x = map' (\n -> do {a <- call n; b <- call n; return ()}) x
 
 doubleCallExample = doubleCall (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))
+
+
+
 
 {- are we definitely linear in the number of elements, even if we have closed over the vector? -}
 
