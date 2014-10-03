@@ -36,5 +36,3 @@ fail = undefined
 class Subeffect (m :: k -> * -> *) f g where
     sub :: m f a -> m g a
 
-
-
