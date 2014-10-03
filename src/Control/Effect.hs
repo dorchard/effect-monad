@@ -1,10 +1,9 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses #-}
+{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses, UndecidableInstances, GADTs, DataKinds, FlexibleInstances, TypeOperators #-}
 
 module Control.Effect where 
 
 import Prelude hiding (Monad(..))
-import GHC.Prim
-
+import GHC.Prim    
 
 {-| Specifies "parametric effect monads" which are essentially monads but
      annotated by a type-level monoid formed by 'Plus' and 'Unit' -}
@@ -36,3 +35,6 @@ fail = undefined
 {-| Specifies subeffecting behaviour -}
 class Subeffect (m :: k -> * -> *) f g where
     sub :: m f a -> m g a
+
+
+

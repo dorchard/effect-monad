@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies, FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, 
              UndecidableInstances, RebindableSyntax, DataKinds, TypeOperators, PolyKinds, 
-             ConstraintKinds #-}
+             ConstraintKinds, KindSignatures #-}
 
 module Control.Effect.Reader (Reader(..), ask, merge, (:->)(..), Var(..), Subset, Set(..)) where
 
@@ -13,7 +13,7 @@ import GHC.Prim
 {-| Provides a effect-parameterised version of the class reader monad. Effects
    are sets of variable-type pairs, providing an effect system for reader effects. -}
 
-data Reader s a = IxR { runReader :: Set s -> a }
+data Reader (s :: [*]) a = IxR { runReader :: Set s -> a }
 
 instance Effect Reader where
     type Inv Reader f g = (IsSet f, IsSet g, Split f g (Union f g))

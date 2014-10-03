@@ -2,6 +2,13 @@
 
 import Control.Monad.State.Lazy
 
+appendBuffer x = do buff <- get
+                    put (buff ++ x)
+
+hello :: Monad m => StateT String (StateT String m) ()
+hello = do name <- get
+           lift $ appendBuffer $ "hello " ++ name
+
 incSC :: (Monad m) => StateT Int m ()
 incSC = do x <- get
            put (x + 1)

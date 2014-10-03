@@ -25,3 +25,6 @@ foo2 = do x <- get (Var::(Var "x"))
 
 foo2_run = (runState foo2) (Ext (x_var :-> 10 :! Eff) Empty)
 
+foo3 :: State '["x" :-> String :! RW] ()
+foo3 = do x <- get x_var
+          put x_var (x ++ " ok !")
