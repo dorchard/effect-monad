@@ -1,111 +1,67 @@
-{-# LANGUAGE RebindableSyntax, EmptyDataDecls, TypeOperators, DataKinds, KindSignatures, PolyKinds, TypeFamilies, ConstraintKinds, UndecidableInstances, NoMonomorphismRestriction #-}
+{-# LANGUAGE RebindableSyntax, EmptyDataDecls, TypeOperators, DataKinds, KindSignatures, PolyKinds, TypeFamilies, ConstraintKinds, UndecidableInstances, NoMonomorphismRestriction, ScopedTypeVariables, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, OverlappingInstances, GADTs, InstanceSigs #-}
 
 import Prelude hiding (Monad(..))
 
 import qualified Control.Concurrent.Chan as C
+import qualified Control.Concurrent as Conc
 import Control.Effect.Monad
 import Control.Effect
 import Control.Effect.Helpers.List
 import GHC.TypeLits
 import GHC.Prim
+import Unsafe.Coerce
+import Debug.Trace
 
+-- IO monad operations wrapped with trivial effect system
 newChan = Wrap $ C.newChan
 writeChan x y = Wrap $ C.writeChan x y
 readChan x = Wrap $ C.readChan x
 type Chan = C.Chan
+forkIO = Wrap . Conc.forkIO . unWrap
+killThread = Wrap . Conc.killThread 
 
+-- Sequential and parallel processes 
+data s :| t
+data P (s :: [*]) 
 
-data Session (s :: [*]) a = Session (IO (List (Chans s), a))
-
--- List (Chans s) -> 
-
-type family Chans (s :: [*]) where
-    Chans '[] = '[]
-    Chans ((s :? t) ': xs) = (Proc s, Chan t) ': (Chans xs)
-    Chans ((s :! t) ': xs) = (Proc s, Chan t) ': (Chans xs)
-
-type family MebChans (s :: [*]) where
-    MebChans '[] = '[]
-    MebChans ((s :? t) ': xs) = (Proc s, Chan t) ': (MebChans xs)
-    MebChans ((s :! t) ': xs) = (Proc s, Chan t) ': (MebChans xs)
-
-{-
-type family LastT (s :: [*]) where
-    LastT s t0 '[] ys = t0
-    LastT s t0 ((s :? t) ': xs) ys = LastT s t xs ys
-    LastT s t0 ((s :! t) ': xs) ys = LastT s t xs ys
-    LastT s t0 ((s' :? t) ': xs) ys = LastT s t0 xs ((s' :! t) ': ys)
-    LastT s t0 ((s' :! t) ': xs) ys = LastT s t0 xs ((s' :! t) ': ys) -}
-
-type family EraseAction t where
-    EraseAction (c :? t) = (Proc c, Chan t)
-    EraseAction (c :! t) = (Proc c, Chan t)
-
-type family Last c t (s :: [*]) where
-    Last c t1 '[] = '[(c, t1)]
-    Last c t1 ((c, t2) ': xs) = (c, t2) ': xs
-    Last c t1 ((d, t2) ': xs) = (d, t2) ': (Last c t1 xs) -- non-matching proc names
-
-type family LastsP (xs :: [*]) (ys :: [*]) where
-    LastsP '[] ys           = ys
-    LastsP ((c, t) ': xs) ((d, a) ': ys) = LastsP xs (Last c t ys)
-
-{-
-
-lastsP ::: [*] -> [*] -> [*]
-lastsP '[] ys = ys
-lastsP ((c, t) ': xs) ((d, a) ': ys) = lasts xs (lastr c t ys)
--}
-
-type Lasts xs = LastsP xs xs
-
-lastsm xs = lasts xs xs
-
-lasts [] ys = ys
-lasts ((c, t) : xs) ys = lasts xs (lastr c t (tail ys))
-
-lastr c t [] = [(c, t)]
-lastr c t1 ((d, t2) : xs) | c == d = (c, t2) : xs
-                          | otherwise = (d, t2) : (lastr c t1 xs)
-
-data s :? a
-data s :! a 
-type (s :: [*]) :| (t :: [*]) = s
+data Session (s :: *) a where
+   Session :: (List s -> IO a) -> Session (P s) a
+   Branch :: (t ~ Dual s) => Session (P s) a -> Session (P t) b -> Session (s :| t) (a, b)
 
 instance Effect Session where
-    type Plus Session s t = s :++ t
-    type Unit Session     = '[]
-    type Inv Session s t  = ()
+    type Plus Session (P s) (P t) = P (s :++ t)
+    type Unit Session     = P '[]
+    type Inv Session s t = (Binder s t)
 
-    return x = Session $ unWrap $ return (Nil, x)
-    x >>= k = undefined
+    return x = Session $ \Nil -> unWrap $ return x
+    (>>=) = binder
 
+class Binder s t where
+    binder :: (Session s a) -> (a -> Session t b) -> Session (Plus Session s t) b
 
-data Proc (c :: Symbol) = Proc
+instance Split s t => Binder (P s) (P t) where
+    binder (Session x) k = 
+        Session $ \xs -> let (s, t) = (split xs) :: (List s, List t)
+                         in unWrap $ do a <- Wrap (x s)
+                                        Wrap $ case (k a) of Session y -> y t
 
 -- * Core combinators
 
-send :: Proc c -> t -> Session '[c :! t] ()
-send c x = Session $ unWrap $ do ch <- newChan
-                                 writeChan ch x
-                                 return (Cons (c, ch) Nil, ())
+data n :? a = R (Proc n) (Chan a)
+data n :! a = S (Proc n) (Chan a)
 
-recv :: Proc c -> Session '[c :? t] t
-recv c = Session $ unWrap $ do ch <- newChan
-                               x <- readChan ch 
-                               return (Cons (c, ch) Nil, x)
+data Proc (n :: Symbol) = Proc
 
-par :: (t ~ Dual s) => Session s a -> Session t b -> Session (s :| t) (a, b)
-par (Session x) (Session y) = undefined
-    {-do  resultA <- newChan
-        resultB <- newChan
-        ta <- forkIO (x >>= (\x' -> writeChan resultA x'))
-        tb <- forkIO (y >>= (\y' -> writeChan resultB x'))
-        killThread ta
-        killThread t b
-        return (ta, tb)-}
+send :: Proc n -> t -> Session (P '[n :! t]) ()
+send c x = Session $ \(Cons (S _ ch) Nil) -> unWrap $ (writeChan ch x) >> return ()
 
-type family Dual (s :: [*]) :: [*] where
+recv :: Proc n -> Session (P '[n :? t]) t
+recv c = Session $ \(Cons (R _ ch) Nil) -> unWrap $ readChan ch
+
+par :: (t ~ Dual s) => Session (P s) a -> Session (P t) b -> Session (s :| t) (a, b)
+par (Session s) (Session t) = Branch (Session s) (Session t)
+
+type family Dual s where
     Dual '[] = '[]
     Dual ((s :? a) ': xs) = (s :! a) ': (Dual xs)
     Dual ((s :! a) ': xs) = (s :? a) ': (Dual xs)
@@ -114,6 +70,11 @@ type family Dual (s :: [*]) :: [*] where
 
 alice = Proc :: Proc "Alice"
 bob   = Proc :: Proc "Bob"
+
+-- satisfiable with a single thread
+examplea = do send alice 42
+              x <- recv alice
+              return $ x + 1
 
 example1 = do send alice 42
               x <- recv bob
@@ -124,4 +85,84 @@ example2 = do x <- recv alice
               return x
 
 example3 = example1 `par` example2             
+
+-- * Various functions relating to the actual evaluation of sessions
+
+class EvalSession s where
+    evalSession :: Session s a -> IO a
+
+instance (MkChans (Chans s), ExpandChans s (Chans s) s) => EvalSession (P s) where
+    evalSession s@(Session k) = unWrap $ do chans <- Wrap $ (mkChans :: (IO (List (Chans s))))
+                                            chans' <- return $ expandChans s chans
+                                            x <- Wrap $ k chans'
+                                            return x
+
+instance (MkChans (Chans s), ExpandChans s (Chans s) s, ExpandChans t (Chans s) t) => EvalSession (s :| t) where
+    evalSession (Branch (Session s) (Session t)) = 
+             unWrap $ do chans <- Wrap $ (mkChans :: (IO (List (Chans s)))) -- since chanels must be dual, by construction
+                         chansA <- return $ expandChans (Session s) chans
+                         chansB <- return $ expandChans (Session t) chans
+                         resultA <- newChan
+                         resultB <- newChan
+                         ta <- forkIO $ (Wrap $ s chansA) >>= (\x' -> writeChan resultA x')
+                         tb <- forkIO $ (Wrap $ t chansB) >>= (\y' -> writeChan resultB y')
+                         x <- readChan resultA
+                         y <- readChan resultB
+                         killThread ta
+                         killThread tb
+                         return (x, y)
+
+type family LastName c (s :: [*]) where
+    LastName c '[] = '[c]
+    LastName c (c ': xs) = xs
+    LastName c (d ': xs) = d ': (LastName c xs) 
+
+type family Names (xs :: [*]) (ys :: [*]) where
+    Names '[] ys           = ys
+    Names xs  '[]          = xs
+    Names (c ': xs) (y ': ys) = Names xs (LastName c ys)
+
+type Chans xs = Names (RemActions xs) (RemActions xs)
+
+type family RemActions (s :: [*]) where
+            RemActions '[] = '[]
+            RemActions ((c :? t) ': xs) = (Proc c, Chan ()) ': (RemActions xs)
+            RemActions ((c :! t) ': xs) = (Proc c, Chan ()) ': (RemActions xs)
+
+
+class MkChans s where
+    mkChans :: IO (List s)
+
+instance MkChans '[] where
+    mkChans = unWrap $ return Nil
+
+instance MkChans xs => MkChans ((Proc p, Chan ()) ': xs) where
+    mkChans = unWrap $ do xs <- Wrap $ ((mkChans) :: IO (List xs))
+                          x <- newChan 
+                          return (Cons (Proc :: (Proc p), x) xs)
+
+class ExpandChans s k t where
+    expandChans :: Session (P s) a -> List k -> List t
+
+instance ExpandChans '[] k '[] where
+    expandChans (Session s) x = Nil
+
+instance (ExpandChans xs k ys, LookUpA p k) => ExpandChans ((p :? t) ': xs) k ((p :? t) ': ys) where
+    expandChans (Session s) xs = 
+        Cons (R (Proc :: (Proc p)) ((unsafeCoerce ((lookupA xs (undefined :: Proc p))::(Chan ()))) :: (Chan t)))
+               ((expandChans ((unsafeCoerce (Session s))::(Session (P xs) a)) xs) :: (List ys))
+
+instance (ExpandChans xs k ys, LookUpA p k) => ExpandChans ((p :! t) ': xs) k ((p :! t) ': ys) where
+    expandChans (Session s) xs = 
+        Cons (S (Proc :: (Proc p)) ((unsafeCoerce ((lookupA xs (undefined :: Proc p))::(Chan ()))) :: (Chan t)))
+               ((expandChans ((unsafeCoerce (Session s))::(Session (P xs) a)) xs) :: (List ys))
+
+class LookUpA k xs where
+    lookupA :: List xs -> Proc k -> Chan ()
+
+instance LookUpA k ((Proc k, Chan ()) ': xs) where
+    lookupA (Cons (_, x) _) k = x 
+    
+instance LookUpA k xs => LookUpA k ((j, w) ': xs) where
+    lookupA (Cons _ xs) k = lookupA xs k
 
