@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses, UndecidableInstances, GADTs, DataKinds, FlexibleInstances, TypeOperators #-}
+{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses #-}
 
 module Control.Effect where 
 
