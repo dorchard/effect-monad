@@ -9,15 +9,6 @@ c1_var = Var::(Var "c1")
 c2_var = Var::(Var "c2")
 o_var  = Var::(Var "out")
 
-instance Show (Var "out") where
-    show _ = "out"
-
-instance Show (Var "c1") where
-    show _ = "c1"
-
-instance Show (Var "c2") where
-    show _ = "c2"
-
 incC :: Var v -> State '[v :-> Int :! RW] ()
 incC var = do x <- get var
               put var (x + 1)
@@ -57,3 +48,14 @@ hellowCount = do hellow
 
 initState' = Ext (c1_var :-> ((0::Int) :! Eff)) (Ext (c2_var :-> ((1::Int) :! Eff)) (Ext (o_var :-> ("" :! Eff)) Empty))
 runHellowCount = runState hellowCount initState'
+
+-- Show instances
+
+instance Show (Var "out") where
+    show _ = "out"
+
+instance Show (Var "c1") where
+    show _ = "c1"
+
+instance Show (Var "c2") where
+    show _ = "c2"
