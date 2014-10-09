@@ -45,20 +45,19 @@ instance Split s t => Binder (P s) (P t) where
                          in unWrap $ do a <- Wrap (x s)
                                         Wrap $ case (k a) of Session y -> y t
 
--- * Core combinators
+-- * Core combinators 
+data n :? a = R (Channel n) (Chan a)
+data n :! a = S (Channel n) (Chan a)
 
-data n :? a = R (Proc n) (Chan a)
-data n :! a = S (Proc n) (Chan a)
+data Channel (n :: Symbol) = Channel
 
-data Proc (n :: Symbol) = Proc
-
-send :: Proc n -> t -> Session (P '[n :! t]) ()
+send :: Channel n -> t -> Session (P '[n :! t]) ()
 send c x = Session $ \(Cons (S _ ch) Nil) -> unWrap $ (writeChan ch x) >> return ()
 
-recv :: Proc n -> Session (P '[n :? t]) t
+recv :: Channel n -> Session (P '[n :? t]) t
 recv c = Session $ \(Cons (R _ ch) Nil) -> unWrap $ readChan ch
 
-par :: (t ~ Dual s) => Session (P s) a -> Session (P t) b -> Session (s :| t) (a, b)
+par :: Session (P s) a -> Session (P (Dual s)) b -> Session (s :| (Dual s)) (a, b)
 par (Session s) (Session t) = Branch (Session s) (Session t)
 
 type family Dual s where
@@ -68,8 +67,8 @@ type family Dual s where
 
 -- * Examples
 
-alice = Proc :: Proc "Alice"
-bob   = Proc :: Proc "Bob"
+alice = Channel :: Channel "Alice"
+bob   = Channel :: Channel "Bob"
 
 -- satisfiable with a single thread
 examplea = do send alice 42
@@ -84,7 +83,14 @@ example2 = do x <- recv alice
               send bob "hi"
               return x
 
-example3 = example1 `par` example2             
+example3 = example1 `par` example2
+
+run_example = evalSession example3
+
+
+example4 q = \p -> do x <- recv p
+                      send q x
+                      return x
 
 -- * Various functions relating to the actual evaluation of sessions
 
@@ -126,8 +132,8 @@ type Chans xs = Names (RemActions xs) (RemActions xs)
 
 type family RemActions (s :: [*]) where
             RemActions '[] = '[]
-            RemActions ((c :? t) ': xs) = (Proc c, Chan ()) ': (RemActions xs)
-            RemActions ((c :! t) ': xs) = (Proc c, Chan ()) ': (RemActions xs)
+            RemActions ((c :? t) ': xs) = (Channel c, Chan ()) ': (RemActions xs)
+            RemActions ((c :! t) ': xs) = (Channel c, Chan ()) ': (RemActions xs)
 
 
 class MkChans s where
@@ -136,10 +142,10 @@ class MkChans s where
 instance MkChans '[] where
     mkChans = unWrap $ return Nil
 
-instance MkChans xs => MkChans ((Proc p, Chan ()) ': xs) where
+instance MkChans xs => MkChans ((Channel p, Chan ()) ': xs) where
     mkChans = unWrap $ do xs <- Wrap $ ((mkChans) :: IO (List xs))
                           x <- newChan 
-                          return (Cons (Proc :: (Proc p), x) xs)
+                          return (Cons (Channel :: (Channel p), x) xs)
 
 class ExpandChans s k t where
     expandChans :: Session (P s) a -> List k -> List t
@@ -149,18 +155,18 @@ instance ExpandChans '[] k '[] where
 
 instance (ExpandChans xs k ys, LookUpA p k) => ExpandChans ((p :? t) ': xs) k ((p :? t) ': ys) where
     expandChans (Session s) xs = 
-        Cons (R (Proc :: (Proc p)) ((unsafeCoerce ((lookupA xs (undefined :: Proc p))::(Chan ()))) :: (Chan t)))
+        Cons (R (Channel :: (Channel p)) ((unsafeCoerce ((lookupA xs (undefined :: Channel p))::(Chan ()))) :: (Chan t)))
                ((expandChans ((unsafeCoerce (Session s))::(Session (P xs) a)) xs) :: (List ys))
 
 instance (ExpandChans xs k ys, LookUpA p k) => ExpandChans ((p :! t) ': xs) k ((p :! t) ': ys) where
     expandChans (Session s) xs = 
-        Cons (S (Proc :: (Proc p)) ((unsafeCoerce ((lookupA xs (undefined :: Proc p))::(Chan ()))) :: (Chan t)))
+        Cons (S (Channel :: (Channel p)) ((unsafeCoerce ((lookupA xs (undefined :: Channel p))::(Chan ()))) :: (Chan t)))
                ((expandChans ((unsafeCoerce (Session s))::(Session (P xs) a)) xs) :: (List ys))
 
 class LookUpA k xs where
-    lookupA :: List xs -> Proc k -> Chan ()
+    lookupA :: List xs -> Channel k -> Chan ()
 
-instance LookUpA k ((Proc k, Chan ()) ': xs) where
+instance LookUpA k ((Channel k, Chan ()) ': xs) where
     lookupA (Cons (_, x) _) k = x 
     
 instance LookUpA k xs => LookUpA k ((j, w) ': xs) where
