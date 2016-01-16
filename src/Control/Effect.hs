@@ -3,7 +3,7 @@
 module Control.Effect where 
 
 import Prelude hiding (Monad(..))
-import GHC.Prim    
+import GHC.Exts
 
 {-| Specifies "parametric effect monads" which are essentially monads but
      annotated by a type-level monoid formed by 'Plus' and 'Unit' -}

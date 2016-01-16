@@ -3,7 +3,7 @@
 
 module Control.Coeffect where 
 
-import GHC.Prim
+import GHC.Exts
 
 {- Coeffect parameterised comonad
 

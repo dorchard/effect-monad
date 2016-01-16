@@ -8,7 +8,7 @@ import Control.Effect
 import Data.Type.Set
 import Prelude hiding (Monad(..))
 import GHC.TypeLits
-import GHC.Prim
+import GHC.Exts
 
 {-| Provides a effect-parameterised version of the class reader monad. Effects
    are sets of variable-type pairs, providing an effect system for reader effects. -}
