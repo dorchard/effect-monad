@@ -2,7 +2,7 @@
 
 module Control.Effect.Cond where
 
-import GHC.Prim
+import GHC.Exts
 
 {-| Provides a conditional using an 'alternation' operation, as opposed to using
    'Subeffect' -}

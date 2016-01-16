@@ -8,7 +8,7 @@ import Control.Effect.Monad
 import Control.Effect
 import Control.Effect.Helpers.List
 import GHC.TypeLits
-import GHC.Prim
+import GHC.Exts
 import Unsafe.Coerce
 import Debug.Trace
 
