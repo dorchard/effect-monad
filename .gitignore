@@ -1,0 +1,6 @@
+
+dist/
+
+# Ignore cabal sandboxes
+.cabal-sandbox
+cabal.sandbox.config
