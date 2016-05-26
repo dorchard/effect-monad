@@ -47,5 +47,4 @@ library
                         Control.Effect.Helpers.List
                         
   build-depends:        base < 5,
-                        type-level-sets >= 0.6 && < 0.7
-
+                        type-level-sets == 0.5
