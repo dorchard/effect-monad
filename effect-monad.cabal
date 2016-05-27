@@ -1,15 +1,14 @@
 name:                   effect-monad
-version:                0.6.1
-synopsis:               Embeds effect systems into Haskell using parameteric effect monads
+version:                0.6.2
+synopsis:               Embeds effect systems into Haskell using graded monads
 description:            
-   Provides the 'parametric effect monad' structure to Haskell with a number of analogous of familiar monads (Reader, Writer, State, Maybe, Counter, Update) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see with paper \"Embedding effect systems in Haskell\" by Orchard and Petricek <http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf> (Haskell, 2014) and the examples in <https://github.com/dorchard/effect-monad/tree/master/examples>. 
-  .
+   Provides the graded monad structure to Haskell with a number of analogs of familiar monads (Reader, Writer, State, Maybe, Counter, Update) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see with paper \"Embedding effect systems in Haskell\" by Orchard and Petricek <http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf> (Haskell, 2014) and the examples in <https://github.com/dorchard/effect-monad/tree/master/examples>. 
   (note, this package was previously called 'ixmonad' until September 2014). 
 
 license:                BSD3
 license-file:           LICENSE
 category:               Control, Monads
-copyright:              2013-14 University of Cambridge
+copyright:              2013-16 University of Cambridge
 author:                 Dominic Orchard
 maintainer:             Dominic Orchard
 stability:              experimental
@@ -29,7 +28,7 @@ library
 
 
   exposed-modules:      Control.Coeffect
-                        Control.Coeffect.Coreader
+                        --Control.Coeffect.Coreader
                         Control.Effect
                         Control.Effect.Cond
                         Control.Effect.Counter
@@ -37,13 +36,13 @@ library
                         Control.Effect.Maybe
                         Control.Effect.Monad
                         Control.Effect.Parameterised
-                        Control.Effect.Reader
+                        --Control.Effect.Reader
                         Control.Effect.ReadOnceReader
-                        Control.Effect.State
+                        Control.Effect.State	
                         Control.Effect.Update
                         Control.Effect.Vector
                         Control.Effect.WriteOnceWriter
-                        Control.Effect.Writer
+                        --Control.Effect.Writer
                         Control.Effect.Helpers.List
                         
   build-depends:        base < 5,
