@@ -1,6 +1,6 @@
-{-# LANGUAGE RebindableSyntax, EmptyDataDecls, GADTs, TypeFamilies, UndecidableInstances, MultiParamTypeClasses, TypeOperators #-}
+{-# LANGUAGE RebindableSyntax, EmptyDataDecls, GADTs, TypeFamilies, UndecidableInstances, MultiParamTypeClasses, TypeOperators, ScopedTypeVariables, ImplicitParams #-}
 
-import Prelude hiding (Monad(..))
+import Prelude hiding (Monad(..),map)
 import Control.Effect
 import Control.Effect.Counter
 
@@ -43,15 +43,42 @@ type family n :* m where
             Z     :* m = Z
             (S n) :* m = m :+ (n :* m)
 
-{- map' is then defined as follows -}
 
-map' :: (a -> Counter t b) -> Vector n a -> Counter (n :* t) (Vector n b)
-map' f Nil         = return Nil
-map' f (Cons x xs) = do x' <- f x
-                        xs' <- map' f xs
-                        return (Cons x' xs')
 
-{- The types show us that if the function counts 't' things, then applying 'map'
+zero :: Counter Z Int
+zero = do x <- return 2
+          y <- return 4
+          return (x + y)
+
+
+
+
+
+
+
+
+
+
+map :: (a -> Counter t b) -> Vector n a -> Counter (n :* t) (Vector n b)
+map f Nil         = return Nil
+map f (Cons x xs) = do x' <- f x       
+                       xs' <- map f xs
+                       return (Cons x' xs')   
+
+class Bar n where
+instance Bar Z where
+instance Bar n => Bar (S n) where
+
+data Listy n a where
+    Nily :: Listy Z a
+    Consy :: (Bar n) => a -> Listy n a -> Listy (S n) a
+
+fooo :: Listy n a -> Int
+fooo Nily = 0
+fooo (Consy x (Consy y xs)) = 2 + (fooo xs)
+fooo (Consy x xs) = 1 + (fooo xs)
+
+{- The types show us that if the function counts 't' things, then applying 'map
 to an n-vector counts 'tn' things -}
 
 {- Example: web socket calls- how many do we do per instances #-}
@@ -59,9 +86,9 @@ to an n-vector counts 'tn' things -}
 call :: Int -> Counter (S Z) ()
 call = undefined
 
-singleCall = map' call (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))
+singleCall = map call (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))
 
-doubleCall x = map' (\n -> do {a <- call n; b <- call n; return ()}) x
+doubleCall x = map (\n -> do {a <- call n; b <- call n; return ()}) x
 
 doubleCallExample = doubleCall (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))
 
@@ -75,4 +102,4 @@ instance LT Z (S n)
 instance LT n m => LT (S n) (S m)
 
 lineraMap :: LT t n => (a -> Counter t b) -> Vector n a -> Counter (n :* t) (Vector n b)
-lineraMap = map'
+lineraMap = map

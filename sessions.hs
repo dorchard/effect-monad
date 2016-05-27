@@ -1,4 +1,4 @@
-{-# LANGUAGE RebindableSyntax, EmptyDataDecls, TypeOperators, DataKinds, KindSignatures, PolyKinds, TypeFamilies, ConstraintKinds, UndecidableInstances, NoMonomorphismRestriction, ScopedTypeVariables, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, OverlappingInstances, GADTs, InstanceSigs #-}
+{-# LANGUAGE RebindableSyntax, EmptyDataDecls, TypeOperators, DataKinds, KindSignatures, PolyKinds, TypeFamilies, ConstraintKinds, UndecidableInstances, NoMonomorphismRestriction, ScopedTypeVariables, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, OverlappingInstances, GADTs, InstanceSigs, ClosedTypeFamilies #-}
 
 import Prelude hiding (Monad(..))
 
@@ -6,7 +6,7 @@ import qualified Control.Concurrent.Chan as C
 import qualified Control.Concurrent as Conc
 import Control.Effect.Monad
 import Control.Effect
-import Control.Effect.Helpers.List
+import Control.Effect.Helpers.List hiding (LookUpA, lookupA)
 import GHC.TypeLits
 import GHC.Prim
 import Unsafe.Coerce
@@ -26,7 +26,8 @@ data P (s :: [*])
 
 data Session (s :: *) a where
    Session :: (List s -> IO a) -> Session (P s) a
-   Branch :: (t ~ Dual s) => Session (P s) a -> Session (P t) b -> Session (s :| t) (a, b)
+   Par :: (t ~ Dual s) => Session (P s) a -> Session (P t) b -> Session (s :| t) (a, b)
+   --Branched :: (List '[n :? Tag] s -> ) -> Session (Br n (s :+ t)) a
 
 instance Effect Session where
     type Plus Session (P s) (P t) = P (s :++ t)
@@ -49,6 +50,16 @@ instance Split s t => Binder (P s) (P t) where
 data n :? a = R (Channel n) (Chan a)
 data n :! a = S (Channel n) (Chan a)
 
+-- data Br (n :: Symbol) t = Br (Channel n) (Chan Tag)
+data s :+ t
+type Sel n = '[n :! Tag]
+type Br n = '[n :? Tag]
+
+data Label (t :: Tag) = Label
+
+data Tag = Inl | Inr
+data Bra n s t = Bra { channel :: n, left :: s, right :: t}
+
 data Channel (n :: Symbol) = Channel
 
 send :: Channel n -> t -> Session (P '[n :! t]) ()
@@ -58,7 +69,32 @@ recv :: Channel n -> Session (P '[n :? t]) t
 recv c = Session $ \(Cons (R _ ch) Nil) -> unWrap $ readChan ch
 
 par :: Session (P s) a -> Session (P (Dual s)) b -> Session (s :| (Dual s)) (a, b)
-par (Session s) (Session t) = Branch (Session s) (Session t)
+par (Session s) (Session t) = Par (Session s) (Session t)
+
+{-
+branch :: Session (P s) a -> Session (P t) a -> Channel n -> Session (Br n (s :+ t)) a
+branch (Session s) (Session t) = undefined {- Branched $ \(Cons (S _ ch) Nil) = 
+                                                 do t <- readChan ch
+                                                    case t of 
+                                                      Inl -> 
+                                                      Inr -> -} -}
+
+branch :: Channel n -> Session s a -> Session t a -> Session (P (Br n)) (Either (Session s a) (Session t a))
+branch n s t = do tag <- recv n
+                  case tag of
+                      Inl -> return $ Left s
+                      Inr -> return $ Right t
+
+data Br' n s t = Brr (Channel n)
+
+br' :: Channel n -> Session s a -> Session t a -> Session (P '[Br' n s t]) a
+br' = undefined
+
+--sel' :: Channel n -> Label t -> Session (P '[Sel' n t])
+--sel' = undefined
+
+select :: Channel n -> Tag -> Session (P (Sel n)) ()
+select n tag = send n tag
 
 type family Dual s where
     Dual '[] = '[]
@@ -87,6 +123,11 @@ example3 = example1 `par` example2
 
 run_example = evalSession example3
 
+c = Channel :: Channel "c"
+
+foo_c :: Channel n -> Session (P '[n :! Int, n :! String]) ()
+foo_c c = do send c 42
+             send c "hello"
 
 example4 q = \p -> do x <- recv p
                       send q x
@@ -104,7 +145,7 @@ instance (MkChans (Chans s), ExpandChans s (Chans s) s) => EvalSession (P s) whe
                                             return x
 
 instance (MkChans (Chans s), ExpandChans s (Chans s) s, ExpandChans t (Chans s) t) => EvalSession (s :| t) where
-    evalSession (Branch (Session s) (Session t)) = 
+    evalSession (Par (Session s) (Session t)) = 
              unWrap $ do chans <- Wrap $ (mkChans :: (IO (List (Chans s)))) -- since chanels must be dual, by construction
                          chansA <- return $ expandChans (Session s) chans
                          chansB <- return $ expandChans (Session t) chans
@@ -117,6 +158,7 @@ instance (MkChans (Chans s), ExpandChans s (Chans s) s, ExpandChans t (Chans s) 
                          killThread ta
                          killThread tb
                          return (x, y)
+
 
 type family LastName c (s :: [*]) where
     LastName c '[] = '[c]

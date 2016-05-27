@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,  
              UndecidableInstances, RebindableSyntax,  DataKinds, 
              TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds, 
-             OverlappingInstances, IncoherentInstances 
+             IncoherentInstances, GADTs 
              #-}
 
 module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
@@ -14,6 +14,7 @@ module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
 import Control.Effect
 import Data.Type.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
 import qualified Data.Type.Set as Set
+--import Data.Type.Map (Mapping(..), Var(..))
 
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
@@ -35,8 +36,38 @@ instance Show (Action W) where
 instance Show (Action RW) where
     show _ = "RW"
 
+infixl 2 :->
+data (k :: Symbol) :-> (v :: *) = (Var k) :-> v
+
+data Var (k :: Symbol) where Var :: Var k 
+                             {- Some special defaults for some common names -}
+                             X   :: Var "x"
+                             Y   :: Var "y"
+                             Z   :: Var "z"
+
+
+instance (Show (Var k), Show v) => Show (k :-> v) where
+    show (k :-> v) = "(" ++ show k ++ " :-> " ++ show v ++ ")"
+instance Show (Var "x") where
+    show X   = "x"
+    show Var = "Var"
+instance Show (Var "y") where
+    show Y   = "y"
+    show Var = "Var"
+instance Show (Var "z") where
+    show Z   = "z"
+    show Var = "Var"
+instance Show (Var v) where
+    show _ = "Var"
+
+{-| Symbol comparison -}
+type instance Cmp (v :-> a) (u :-> b) = CmpSymbol v u
+
+
+
 {-| Describes an effect action 's' on a value of type 'a' -}
-data (:!) (a :: *) (s :: Eff) = a :! (Action s) 
+--data EffMapping a (s :: Eff) = a :! (Action s)
+data a :! (s :: Eff) = a :! (Action s)
 
 instance (Show (Action f), Show a) => Show (a :! f) where
     show (a :! f) = show a ++ " ! " ++ show f
@@ -44,8 +75,8 @@ instance (Show (Action f), Show a) => Show (a :! f) where
 infixl 3 :!
 
 type SetLike s = Nub (Sort s)
-type UnionS s t = Nub (Sort (Append s t))
-type Unionable s t = (Sortable (Append s t), Nubable (Sort (Append s t)) (Nub (Sort (Append s t))),
+type UnionS s t = Nub (Sort (s :++ t))
+type Unionable s t = (Sortable (s :++ t), Nubable (Sort (s :++ t)) (Nub (Sort (s :++ t))),
                       Split s t (Union s t))
 
 {-| Union operation for state effects -}
@@ -106,7 +137,7 @@ instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! W) ': (u :-> b
 instance Update ((u :-> b :! s) ': as) as' => Update ((v :-> a :! R) ': (u :-> b :! s) ': as) ((v :-> a :! R) ': as') where
     update (Ext e (Ext e' xs)) = Ext e $ update (Ext e' xs)
 
-type IntersectR s t = (Sortable (Append s t), Update (Sort (Append s t)) t)
+type IntersectR s t = (Sortable (s :++ t), Update (Sort (s :++ t)) t)
 
 {-| Intersects a set of write effects and a set of read effects, updating any read effects with
     any corresponding write value -}

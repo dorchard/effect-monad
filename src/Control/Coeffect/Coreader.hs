@@ -4,11 +4,11 @@
 module Control.Coeffect.Coreader where
 
 import Control.Coeffect
-import Data.Type.Set
+import Data.Type.Map
 
 {-| Provides 'reader monad'-like behaviour but as a comonad, using an indexed
     version of the product comonad -}
-data IxCoreader s a = IxR { runCoreader :: (a, Set s) }
+data IxCoreader s a = IxR { runCoreader :: (a, Map s) }
 
 instance Coeffect IxCoreader where
     type Inv IxCoreader s t = (Unionable s t, Split s t (Union s t))
