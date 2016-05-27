@@ -1,8 +1,8 @@
-{-# LANGUAGE TypeFamilies, RebindableSyntax #-}
+{-# Language TypeFamilies, RebindableSyntax #-}
 
 import Control.Effect
 import Control.Effect.Monad
-import Prelude hiding (Monad(..)) 
+import Prelude hiding (Monad(..))
 
 putStrLn' = Wrap . putStrLn
 

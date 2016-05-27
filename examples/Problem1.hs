@@ -33,5 +33,3 @@ hellowCount = do hellow
                  lift $ lift $ incSC
 
 runHellowCount = runStateT (runStateT (runStateT hellowCount "") 0) 1
-
-

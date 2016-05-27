@@ -1,13 +1,13 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,  
-             UndecidableInstances, RebindableSyntax,  DataKinds, 
-             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds, 
-             IncoherentInstances, GADTs 
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,
+             UndecidableInstances, RebindableSyntax,  DataKinds,
+             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds,
+             IncoherentInstances, GADTs
              #-}
 
 module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
-                                  Eff(..), Action(..), Var(..), union, UnionS, 
-                                     Reads(..), Writes(..), Unionable, Sortable, SetLike, 
-                                      StateSet, 
+                                  Eff(..), Action(..), Var(..), union, UnionS,
+                                     Reads(..), Writes(..), Unionable, Sortable, SetLike,
+                                      StateSet,
                                           --- may not want to export these
                                           IntersectR, Update, Sort, Split) where
 
@@ -19,8 +19,8 @@ import qualified Data.Type.Set as Set
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 
-{-| Provides an effect-parameterised version of the state monad, which gives an 
-   effect system for stateful computations with annotations that are sets of 
+{-| Provides an effect-parameterised version of the state monad, which gives an
+   effect system for stateful computations with annotations that are sets of
    variable-type-action triples. -}
 
 
@@ -39,7 +39,7 @@ instance Show (Action RW) where
 infixl 2 :->
 data (k :: Symbol) :-> (v :: *) = (Var k) :-> v
 
-data Var (k :: Symbol) where Var :: Var k 
+data Var (k :: Symbol) where Var :: Var k
                              {- Some special defaults for some common names -}
                              X   :: Var "x"
                              Y   :: Var "y"
@@ -101,15 +101,15 @@ instance Nubable '[] '[] where
 instance Nubable '[e] '[e] where
     nub (Ext e Empty) = (Ext e Empty)
 
-instance Nubable ((k :-> b :! s) ': as) as' => 
+instance Nubable ((k :-> b :! s) ': as) as' =>
     Nubable ((k :-> a :! s) ': (k :-> b :! s) ': as) as' where
     nub (Ext _ (Ext x xs)) = nub (Ext x xs)
 
-instance Nubable ((k :-> a :! RW) ': as) as' => 
+instance Nubable ((k :-> a :! RW) ': as) as' =>
     Nubable ((k :-> a :! s) ': (k :-> a :! t) ': as) as' where
     nub (Ext _ (Ext (k :-> (a :! _)) xs)) = nub (Ext (k :-> (a :! (Eff::(Action RW)))) xs)
 
-instance Nubable ((j :-> b :! t) ': as) as' => 
+instance Nubable ((j :-> b :! t) ': as) as' =>
     Nubable ((k :-> a :! s) ': (j :-> b :! t) ': as) ((k :-> a :! s) ': as') where
     nub (Ext (k :-> (a :! s)) (Ext (j :-> (b :! t)) xs)) = Ext (k :-> (a :! s)) (nub (Ext (j :-> (b :! t)) xs))
 
@@ -121,7 +121,7 @@ class Update s t where
 instance Update xs '[] where
     update _ = Empty
 
-instance Update '[e] '[e] where 
+instance Update '[e] '[e] where
     update s = s
 
 {-
@@ -172,19 +172,19 @@ put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 {-| Captures what it means to be a set of state effects -}
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
 type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
-                             UnionS f '[] ~ f, Split f '[] f, 
-                             UnionS '[] f ~ f, Split '[] f f, 
+                             UnionS f '[] ~ f, Split f '[] f,
+                             UnionS '[] f ~ f, Split '[] f f,
                              UnionS f f ~ f, Split f f f,
                              Unionable f '[], Unionable '[] f)
-                   
+
 -- Indexed monad instance
 instance Effect State where
     type Inv State s t = (IsSet s, IsSet (Reads s), IsSet (Writes s),
                           IsSet t, IsSet (Reads t), IsSet (Writes t),
-                          Reads (Reads t) ~ Reads t, Writes (Writes s) ~ Writes s, 
-                            Split (Reads s) (Reads t) (Reads (UnionS s t)), 
-                            Unionable (Writes s) (Writes t), 
-                            IntersectR (Writes s) (Reads t), 
+                          Reads (Reads t) ~ Reads t, Writes (Writes s) ~ Writes s,
+                            Split (Reads s) (Reads t) (Reads (UnionS s t)),
+                            Unionable (Writes s) (Writes t),
+                            IntersectR (Writes s) (Reads t),
                             Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
 
     {-| Pure state effect is the empty state -}
@@ -195,17 +195,16 @@ instance Effect State where
 
     return x = State $ \Empty -> (x, Empty)
 
-    (State e) >>= k = 
+    (State e) >>= k =
         State $ \st -> let (sR, tR) = split st
                            (a, sW)  = e sR
                            (b, tW) = (runState $ k a) (sW `intersectR` tR)
-                       in  (b, sW `union` tW) 
+                       in  (b, sW `union` tW)
 
 
 {-
 instance (Split s t (Union s t), Sub s t) => Subeffect State s t where
-    sub (State e) = IxR $ \st -> let (s, t) = split st 
-                                           _ = ReflP p t 
+    sub (State e) = IxR $ \st -> let (s, t) = split st
+                                           _ = ReflP p t
                                  in e s
 -}
-

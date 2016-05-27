@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, DataKinds, TypeOperators, 
+{-# LANGUAGE FlexibleContexts, DataKinds, TypeOperators,
               RebindableSyntax, FlexibleInstances #-}
 
 import Prelude hiding (Monad(..))
@@ -24,7 +24,7 @@ write x = do  writeS x
 initState0 = Ext (c1 :-> ((0::Int) :! Eff)) (Ext (out :-> ("" :! Eff)) Empty)
 runWrite = runState (write "hello") initState0
 
-hellow :: State '["c1" :-> Int :! RW, "nom" :-> String :! R, "out" :-> String :! RW] () 
+hellow :: State '["c1" :-> Int :! RW, "nom" :-> String :! R, "out" :-> String :! RW] ()
 hellow = do write "hello"
             write " "
             name <- get (Var::(Var "nom"))
@@ -37,7 +37,7 @@ appendBuffer x = do let bvar = Var::(Var "buff")
                     put bvar (buff ++ x)
 
 hello :: State '["buff" :-> String :! RW, "name" :-> String :! R] ()
-hello = do name <- get (Var::(Var "name")) 
+hello = do name <- get (Var::(Var "name"))
            appendBuffer $ "hello " ++ name
 
 initState = Ext (c1 :-> ((0::Int) :! Eff)) (Ext (out :-> ("" :! Eff)) Empty)

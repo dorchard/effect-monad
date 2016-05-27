@@ -2,7 +2,7 @@
              MultiParamTypeClasses, FlexibleInstances, UndecidableInstances,
              ScopedTypeVariables, PolyKinds, FlexibleContexts #-}
 
-module Control.Effect.Writer(Writer(..), Symbol, put, Mapping,
+module Control.Effect.Writer(Writer(..), Symbol, put, Mapping(..),
                              IsMap, Map(..), union, Var(..),
                              Union, Unionable) where
 

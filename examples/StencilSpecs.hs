@@ -27,7 +27,7 @@ fooFwd = do a <- ix (IntT :: (IntT (Pos 0)))
 fooSymBroken :: (Num a) => StencilM a (Symmetrical (S Z)) a a
 fooSymBroken = StencilM $ do a <- ix (Pos Z)
                              b <- ix (Pos (S Z))
-                             return $ a + b 
+                             return $ a + b
 -}
 
 -- fooFwd has a 'forward' pattern to depth of 2
@@ -46,7 +46,7 @@ type family ForwardP depth where
 
 -- Symmetrical stencils (derived from Forward and Backward stencils of the same depth)
 
-type Symmetrical depth = AsSet ((IntT (Pos 0)) ': (Append (ForwardP depth) (BackwardP depth)))
+type Symmetrical depth = AsSet ((IntT (Pos 0)) ': ((ForwardP depth) :++ (BackwardP depth)))
 
 -- Backward-oriented stencils
 
@@ -54,4 +54,4 @@ type Backward sten = AsSet ((IntT (Pos 0)) ': (BackwardP sten))
 
 type family  BackwardP depth where
              BackwardP 0 = '[]
-             BackwardP n = (IntT (Neg n)) ': (BackwardP (n - 1)) 
+             BackwardP n = (IntT (Neg n)) ': (BackwardP (n - 1))

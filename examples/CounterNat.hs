@@ -1,4 +1,5 @@
-{-# LANGUAGE RebindableSyntax, TypeOperators, DataKinds, KindSignatures, GADTs, TypeFamilies, UndecidableInstances #-}
+{-# LANGUAGE RebindableSyntax, TypeOperators, DataKinds, KindSignatures, GADTs,
+             TypeFamilies, UndecidableInstances #-}
 
 import Prelude hiding (Monad(..))
 import Control.Effect
@@ -8,12 +9,12 @@ import GHC.TypeLits
 
 import Debug.Trace
 
-{- 
+{-
 
-The 'Counter' indexed monad is useful for counting computations
+The 'Counter' graded monad is useful for counting computations
 of a particular kind (e.g., counting number of calls to a websocket)
 or estimating resource usage (e.g., a websocket call is more expensive
-than a disk write). 
+than a disk write).
 
 By default, zero counts are tracked, e.g., -}
 
@@ -27,10 +28,10 @@ foo = do x <- return 2
 -- foo2 :: Counter (S Z) Int
 foo2 = do x <- tick 2
           y <- return 3
-          return (x * y) 
+          return (x * y)
 
-{- This can be used for other cool things, like proving that 'map' has 
- linear complexity of 'map' at the type-level! 
+{- This can be used for other cool things, like proving that 'map' has
+ linear complexity of 'map' at the type-level!
 
 For this we need sized lists:
 -}
@@ -46,7 +47,7 @@ type family (n :: Nat) :* (m :: Nat) :: Nat where
 
 {- map' is then defined as follows -}
 
-{- CAN'T TYPE CHECK, see Counter.hs 
+{- CAN'T TYPE CHECK, see Counter.hs
 
 map' :: (a -> Counter t b) -> Vector n a -> Counter (n :* t) (Vector n b)
 map' f Nil         = return Nil
@@ -55,4 +56,3 @@ map' f (Cons x xs) = do x' <- f x
                         return (Cons x' xs')
 
 -}
-

@@ -31,6 +31,9 @@ instance Effect Reader where
     (IxR e) >>= k = IxR $ \fg -> let (f, g) = split fg
                                  in (runReader $ k (e f)) g
 
+-- Values of the same type can be combined
+type instance Combine v v = v
+
 {-| 'ask' for a variable 'v' of type 'a', raising an effect -}
 ask :: Var v -> Reader '[v :-> a] a
 ask Var = IxR $ \(Ext Var a Empty) -> a

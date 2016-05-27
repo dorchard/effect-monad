@@ -6,17 +6,17 @@ import Control.Effect.Cond
 import Control.Effect.ReadOnceReader
 
 foo = do x <- ask
-         y <- ask 
+         y <- ask
          return ("Name " ++ x ++ " age " ++ (show y))
 
 --foo_eval = foo (HCons' 'a' (HCons' "bc" HNil'))
 
-foo2 = do x <- ask 
+foo2 = do x <- ask
           y <- ask
           xs <- ask
           return (x : (y : xs))
 
-foo2' = do x <- ask 
+foo2' = do x <- ask
            xs' <- do y <- ask
                      xs <- ask
                      return (y:xs)

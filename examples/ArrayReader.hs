@@ -1,18 +1,17 @@
 {-# LANGUAGE TypeFamilies, GADTs, MultiParamTypeClasses, FlexibleInstances,
              FlexibleContexts, DataKinds, UndecidableInstances, ScopedTypeVariables #-}
 
-module ArrayReader where 
+module ArrayReader where
 
-import GHC.TypeLits 
+import GHC.TypeLits
 import Data.Array
-import Prelude hiding (Monad(..)) 
+import Prelude hiding (Monad(..))
 
-import Data.Proxy
 import Control.Effect
 import Data.Type.Set
 
 -- Array with a cursor
-data CArray (x::[*]) a = MkA (Array Int a, Int) 
+data CArray (x::[*]) a = MkA (Array Int a, Int)
 
 -- Computations from 'a' to 'b' with an array parameter
 data Stencil a (r::[*]) b = Stencil (CArray r a -> b)
@@ -26,7 +25,7 @@ instance Effect (Stencil a) where
     type Plus (Stencil a) s t = Union s t -- append specs
     type Unit (Stencil a)     = '[]       -- empty spec
 
-    (Stencil f) >>= k = 
+    (Stencil f) >>= k =
         Stencil (\(MkA a) -> let (Stencil f') = k (f (MkA a))
                                  in f' (MkA a))
     return a = Stencil (\_ -> a)
@@ -47,4 +46,3 @@ type instance Cmp (IntT (Pos n)) (IntT (Pos m)) = CmpNat n m
 type instance Cmp (IntT (Neg n)) (IntT (Neg m)) = CmpNat n m
 type instance Cmp (IntT (Pos n)) (IntT (Neg m)) = GT
 type instance Cmp (IntT (Neg n)) (IntT (Pos m)) = LT
-
