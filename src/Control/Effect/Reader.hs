@@ -1,11 +1,13 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, 
-             UndecidableInstances, RebindableSyntax, DataKinds, TypeOperators, PolyKinds, 
-             ConstraintKinds, KindSignatures #-}
+{-# LANGUAGE TypeFamilies, FlexibleInstances, FlexibleContexts,
+             MultiParamTypeClasses, UndecidableInstances, RebindableSyntax,
+             DataKinds, TypeOperators, PolyKinds, ConstraintKinds,
+             KindSignatures #-}
 
-module Control.Effect.Reader (Reader(..), ask, merge, (:->)(..), Var(..), Subset, Set(..)) where
+module Control.Effect.Reader (Reader(..), ask, merge, Mapping(..),
+                              Var(..), Submap, Map(..)) where
 
 import Control.Effect
-import Data.Type.Set
+import Data.Type.Map
 import Prelude hiding (Monad(..))
 import GHC.TypeLits
 import GHC.Exts ( Constraint )
@@ -13,10 +15,10 @@ import GHC.Exts ( Constraint )
 {-| Provides a effect-parameterised version of the class reader monad. Effects
    are sets of variable-type pairs, providing an effect system for reader effects. -}
 
-newtype Reader (s :: [*]) a = IxR { runReader :: Set s -> a }
+newtype Reader (s :: [Mapping Symbol *]) a = IxR { runReader :: Map s -> a }
 
 instance Effect Reader where
-    type Inv Reader f g = (IsSet f, IsSet g, Split f g (Union f g))
+    type Inv Reader f g = (IsMap f, IsMap g, Split f g (Union f g))
 
     {-| A trivial effect is the empty set -}
     type Unit Reader = '[]
@@ -31,15 +33,15 @@ instance Effect Reader where
 
 {-| 'ask' for a variable 'v' of type 'a', raising an effect -}
 ask :: Var v -> Reader '[v :-> a] a
-ask Var = IxR $ \(Ext (Var :-> a) Empty) -> a
+ask Var = IxR $ \(Ext Var a Empty) -> a
 
 {-| Provides a way to emulated the ImplicitParams features of GHC/Haskell -}
 merge :: (Unionable s t) => (a -> Reader (Union s t) b) -> Reader s (a -> Reader t b)
 merge k = IxR $ \s -> \a -> IxR $ \t -> runReader (k a) (union s t)
 
 {-| If 's' is a subset of 't' then, 's' is a subeffect of 't' -}
-instance Subset s t => Subeffect Reader s t where
-    sub (IxR e) = IxR $ \st -> let s = subset st in e s
+instance Submap s t => Subeffect Reader s t where
+    sub (IxR e) = IxR $ \st -> let s = submap st in e s
 
 {-
 {-| Define the operation for removing duplicates using mappend -}

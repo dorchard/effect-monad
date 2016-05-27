@@ -1,14 +1,15 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs, 
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, GADTs,
              ConstraintKinds, TypeOperators, DataKinds, UndecidableInstances #-}
 
 module Control.Coeffect.Coreader where
 
 import Control.Coeffect
 import Data.Type.Map
+import GHC.TypeLits
 
 {-| Provides 'reader monad'-like behaviour but as a comonad, using an indexed
     version of the product comonad -}
-data IxCoreader s a = IxR { runCoreader :: (a, Map s) }
+data IxCoreader (s :: [Mapping Symbol *]) a = IxR { runCoreader :: (a, Map s) }
 
 instance Coeffect IxCoreader where
     type Inv IxCoreader s t = (Unionable s t, Split s t (Union s t))
@@ -29,5 +30,4 @@ instance CoeffectZip IxCoreader where
 
 {-| 'ask' for the value of variable 'v', e.g., 'ask (Var::(Var "x"))' -}
 ask :: Var v -> IxCoreader '[v :-> a] b -> a
-ask _ = \(IxR (_, Ext (Var :-> a) Empty)) -> a
-
+ask _ = \(IxR (_, Ext Var a Empty)) -> a
