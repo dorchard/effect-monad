@@ -1,20 +1,34 @@
 name:                   effect-monad
-version:                0.7.0.0
-synopsis:               Embeds effect systems into Haskell using graded monads
-description:            
-   Provides the graded monad structure to Haskell with a number of analogs of familiar monads (Reader, Writer, State, Maybe, Counter, Update) and a wrapper over normal monads (Control.Effect.Monad). This provides a way to embed effect systems into Haskell. For more information see with paper \"Embedding effect systems in Haskell\" by Orchard and Petricek <http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf> (Haskell, 2014) and the examples in <https://github.com/dorchard/effect-monad/tree/master/examples>. 
-  (note, this package was previously called 'ixmonad' until September 2014). 
+version:                0.8.0.0
+synopsis:               Embeds effect systems and program logics into Haskell using graded monads and parameterised monads
+description:
+   Provides the graded monad structure to Haskell via Control.Effect
+   with a number of analogs of familiar monads and some new things:
+        Reader, Writer, State, Maybe, Counter, Update
+
+   and a wrapper over normal monads (Control.Effect.Monad). This provides a way
+   to embed effect systems into Haskell. For more information see the paper
+   \"Embedding effect systems in Haskell\" by Orchard and Petricek
+   <http://dorchard.co.uk/publ/haskell14-effects.pdf> (Haskell, 2014)
+
+   Also provides the parameterised monad structure due to Atkey in
+   Control.Effect.Parameterised along with some instances:
+       AtomicState, SafeFiles, ExtensibleState
+
+   and the examples in <https://github.com/dorchard/effect-monad/tree/master/examples>.
+
+  (note, this package was previously called 'ixmonad' until September 2014).
 
 license:                BSD3
 license-file:           LICENSE
 category:               Control, Monads
-copyright:              2013-16 University of Cambridge
+copyright:              2013-18 University of Kent
 author:                 Dominic Orchard
 maintainer:             Dominic Orchard
 stability:              experimental
 build-type:             Simple
 cabal-version:          >= 1.6
-tested-with:            GHC == 7.10.3, GHC == 8.0.1
+tested-with:            GHC == 7.10.3, GHC == 8.0.1, GHC == 8.2.2
 
 extra-source-files:     examples/*.hs
 
@@ -35,15 +49,20 @@ library
                         Control.Effect.CounterNat
                         Control.Effect.Maybe
                         Control.Effect.Monad
-                        Control.Effect.Parameterised
+                        Control.Effect.ParameterisedAsGraded
                         Control.Effect.Reader
                         Control.Effect.ReadOnceReader
-                        Control.Effect.State	
+                        Control.Effect.State
                         Control.Effect.Update
                         Control.Effect.Vector
                         Control.Effect.WriteOnceWriter
                         Control.Effect.Writer
                         Control.Effect.Helpers.List
-                        
+                        Control.Effect.Parameterised
+                        Control.Effect.Parameterised.AtomicState
+                        Control.Effect.Parameterised.ExtensibleState
+                        Control.Effect.Parameterised.SafeFiles
+                        Control.Effect.Parameterised.State
+
   build-depends:        base < 5,
-                        type-level-sets == 0.8.0.0
+                        type-level-sets >= 0.8.7.0

@@ -1,25 +1,31 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, DataKinds #-}
+-- Used to make the types extra clear
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE PolyKinds #-}
 
-module Control.Effect.Parameterised where
+-- This module implement parameterised monads due to Bob Atkey
+-- (see 'Parameterised Notions of Computing' JFP 2009)
+-- also defined in Control.Monad.Indexed (category-extras)
 
-import Control.Effect
+module Control.Effect.Parameterised ((>>), PMonad(..), fail, ifThenElse) where
 
-{-| Implements Bob Atkey's 'parametric monads', 
-    and also the Control.Monad.Indexed package, by emulating
-    indexing by morphisms -}
+-- Bye Monads... as we know them
+import Prelude hiding (Monad(..))
 
-{-| Data type of morphisms -}
-newtype T (i :: Morph * *) a = T a
+-- Hello Parameterised Monads
+class PMonad (pm :: k -> k -> * -> *) where
+  -- Lift pure values into effect-invariant computations
+  return :: a -> pm inv inv a
 
-{-| Data type denoting either a morphisms with source and target types, or identity -}
-data Morph a b = M a b | Id
+  -- Sequentially compose effectful computations
+  (>>=) :: pm pre interm t -> (t -> pm interm post t') -> pm pre post t'
 
-instance Effect (T :: ((Morph * *) -> * -> *)) where
-    type Unit T = Id
-    type Plus T (M a b) (M c d) = M a d
-    type Plus T Id (M a b) = M a b
-    type Plus T (M a b) Id = M a b
-    type Inv  T (M a b) (M c d) = c ~ d
+-- Other boilerplate
+(>>) :: PMonad pm => pm pre mid t -> pm mid post t' -> pm pre post t'
+x >> y = x >>= const y
 
-    return a = T a
-    (T x) >>= k = let T y = k x in T y
+fail :: String -> m inv inv a
+fail = error
+
+ifThenElse :: Bool -> a -> a -> a
+ifThenElse True x _ = x
+ifThenElse False _ y = y
