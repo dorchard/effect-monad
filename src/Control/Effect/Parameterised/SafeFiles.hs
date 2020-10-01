@@ -8,6 +8,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Control.Effect.Parameterised.SafeFiles
          (openFile, hGetChar, hPutChar, hClose, hIsEOF, runSafeFiles
@@ -15,7 +16,7 @@ module Control.Effect.Parameterised.SafeFiles
          , PMonad(..), (>>), ifThenElse, fail) where
 
 -- Bye Monads... as we know them
-import Prelude hiding (Monad(..))
+import Prelude hiding (Monad(..), fail)
 import Control.Effect.Parameterised
 
 -- Import qualified versions of standard code we want to wrap

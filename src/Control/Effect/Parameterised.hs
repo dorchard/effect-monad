@@ -1,6 +1,7 @@
 -- Used to make the types extra clear
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- This module implement parameterised monads due to Bob Atkey
 -- (see 'Parameterised Notions of Computing' JFP 2009)
@@ -9,7 +10,7 @@
 module Control.Effect.Parameterised ((>>), PMonad(..), fail, ifThenElse) where
 
 -- Bye Monads... as we know them
-import Prelude hiding (Monad(..))
+import Prelude hiding (Monad(..), fail)
 
 -- Hello Parameterised Monads
 class PMonad (pm :: k -> k -> * -> *) where

@@ -1,12 +1,13 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Control.Effect.Parameterised.ExtensibleState
           (State(..), Get, Put, Update, get, put, modify
           , PMonad(..), (>>), ifThenElse, fail) where
 
-import Prelude hiding (Monad(..))
+import Prelude hiding (Monad(..), fail)
 import Control.Effect.Parameterised
 import Control.Effect.Parameterised.State
 import Data.Type.Map
