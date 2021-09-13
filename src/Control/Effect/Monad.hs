@@ -15,15 +15,22 @@ This wrapper wraps normal monads into the Effect interface using the 'M' contruc
 data Monad m f a where
     Wrap :: P.Monad m => m a -> Monad m () a
 
+instance Functor m => Functor (Monad m f) where
+    fmap f (Wrap ma) = Wrap $ f <$> ma
+
 {-| Unwrap a monad -}
 unWrap :: P.Monad m => Monad m f a -> m a
 unWrap (Wrap m) = m
 
-instance (P.Monad m) => Effect (Monad m) where
+instance (P.Monad m) => EffectApplicative (Monad m) where
     {-| Trivial singleton monoid -}
     type Inv (Monad m) s t    = ()
     type Unit (Monad m)       = ()
     type Plus (Monad m) s t   = ()
 
-    return x = Wrap (P.return x)
+    pure x = Wrap (P.return x)
+
+    Wrap f <*> Wrap a = Wrap $ f P.<*> a
+
+instance (P.Monad m) => Effect (Monad m) where
     (Wrap x) >>= f = Wrap ((P.>>=) x (unWrap . f))
