@@ -9,13 +9,13 @@ import Control.Effect.Cond
 
 {-| Provides an indexed version of the |Maybe| monad -}
 
-data F 
-data T 
+data F
+data T
 data U
 
 data IMaybe p a where
-    INothing ::               IMaybe F a 
-    IJust    :: a          -> IMaybe T a 
+    INothing ::               IMaybe F a
+    IJust    :: a          -> IMaybe T a
     IDyn     :: IMaybe s a -> IMaybe U a -- dynamic partiality
 
 instance Show a => Show (IMaybe p a) where
@@ -39,8 +39,8 @@ instance Effect IMaybe where
 
   -- dynamic (statically undecidable)
   (IDyn (IJust a))  >>= k = IDyn (k a)
-  (IDyn (INothing)) >>= k = IDyn INothing 
-  
+  (IDyn (INothing)) >>= k = IDyn INothing
+
 instance Cond IMaybe where
     type AltInv IMaybe s t = ()
 
