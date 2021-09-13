@@ -10,8 +10,8 @@ This library is based on the paper "Embedding Effect Systems in
 Haskell" (Orchard, Petricek, Haskell 2014). For more information, see
 talk slides and papers here:
 
-       http://www.cl.cam.ac.uk/~dao29/publ/haskell14-effects.pdf
-       http://www.cl.cam.ac.uk/~dao29/talks/haskell14-orchard-petricek-effects.pdf
+       http://www.cs.kent.ac.uk/~dao7/publ/haskell14-effects.pdf
+       http://www.cs.kent.ac.uk/~dao7/talks/haskell14-orchard-petricek-effects.pdf
 
 This is also available on hackage (http://hackage.haskell.org/package/effect-monad)
 so you can get this by doing:
