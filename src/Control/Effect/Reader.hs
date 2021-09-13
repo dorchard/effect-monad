@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, FlexibleInstances, FlexibleContexts,
              MultiParamTypeClasses, UndecidableInstances, RebindableSyntax,
              DataKinds, TypeOperators, PolyKinds, ConstraintKinds,
-             KindSignatures #-}
+             KindSignatures, DeriveFunctor #-}
 
 module Control.Effect.Reader (Reader(..), ask, merge, Mapping(..),
                               Var(..), Submap, Map(..)) where
@@ -16,8 +16,9 @@ import GHC.Exts ( Constraint )
    are sets of variable-type pairs, providing an effect system for reader effects. -}
 
 newtype Reader (s :: [Mapping Symbol *]) a = IxR { runReader :: Map s -> a }
+    deriving (Functor)
 
-instance Effect Reader where
+instance EffectApplicative Reader where
     type Inv Reader f g = (IsMap f, IsMap g, Split f g (Union f g))
 
     {-| A trivial effect is the empty set -}
@@ -26,7 +27,10 @@ instance Effect Reader where
     type Plus Reader f g = Union f g
 
     {-| Trivially pure computation has an empty reader environment -}
-    return x = IxR $ \Empty -> x
+    pure x = IxR $ \Empty -> x
+    (<*>) = liftE2
+
+instance Effect Reader where
     {-| Composing copmutations splits the reader requirements between the two -}
     (IxR e) >>= k = IxR $ \fg -> let (f, g) = split fg
                                  in (runReader $ k (e f)) g

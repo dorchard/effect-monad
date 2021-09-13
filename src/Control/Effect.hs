@@ -42,3 +42,6 @@ fail = undefined
 {-| Specifies subeffecting behaviour -}
 class Subeffect (m :: k -> * -> *) f g where
     sub :: m f a -> m g a
+
+liftE2 :: (Effect m, Inv m f g) => m f (a -> b) -> m g a -> m (Plus m f g) b
+liftE2 f a = f >>= (<$> a)

@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeFamilies, TypeOperators, DataKinds #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Control.Effect.CounterNat where
 
@@ -12,15 +13,19 @@ import Prelude hiding (Monad(..))
 
 {-| The counter has no semantic meaning -}
 data Counter (n :: Nat) a = Counter { forget :: a }
+    deriving (Functor)
 
-instance Effect Counter where
+instance EffectApplicative Counter where
     type Inv Counter n m = ()
     {-| Trivial effect annotation is 0 -}
     type Unit Counter = 0
     {-| Compose effects by addition -}
     type Plus Counter n m = n + m
 
-    return a = Counter a
+    pure a = Counter a
+    (<*>) = liftE2
+
+instance Effect Counter where
     (Counter a) >>= k = Counter . forget $ k a
 
 {-| A 'tick' provides a way to increment the counter -}

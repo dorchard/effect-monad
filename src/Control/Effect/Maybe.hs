@@ -1,4 +1,6 @@
 {-# LANGUAGE EmptyDataDecls, TypeFamilies, GADTs #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Control.Effect.Maybe where
 
@@ -18,12 +20,14 @@ data IMaybe p a where
     IJust    :: a          -> IMaybe T a
     IDyn     :: IMaybe s a -> IMaybe U a -- dynamic partiality
 
+deriving instance Functor (IMaybe p)
+
 instance Show a => Show (IMaybe p a) where
     show INothing  = "Nothing"
     show (IJust a) = "Just " ++ show a
     show (IDyn a)  = show a
 
-instance Effect IMaybe where
+instance EffectApplicative IMaybe where
   type Inv IMaybe s t = ()
   type Unit IMaybe = T
 
@@ -31,8 +35,10 @@ instance Effect IMaybe where
   type Plus IMaybe T s = s
   type Plus IMaybe U s = U
 
-  return x = IJust x
+  pure x = IJust x
+  (<*>) = liftE2
 
+instance Effect IMaybe where
   -- static
   (IJust x) >>= k = k x
   INothing  >>= k = INothing

@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,
              UndecidableInstances, RebindableSyntax,  DataKinds,
              TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds,
-             IncoherentInstances, GADTs
+             IncoherentInstances, GADTs, DeriveFunctor
              #-}
 
 module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
@@ -146,6 +146,7 @@ intersectR s t = update (quicksort (append s t))
 
 {-| Parametric effect state monad -}
 data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }
+    deriving (Functor)
 
 {-| Calculate just the reader effects -}
 type family Reads t where
@@ -178,7 +179,7 @@ type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
                              Unionable f '[], Unionable '[] f)
 
 -- Indexed monad instance
-instance Effect State where
+instance EffectApplicative State where
     type Inv State s t = (IsSet s, IsSet (Reads s), IsSet (Writes s),
                           IsSet t, IsSet (Reads t), IsSet (Writes t),
                           Reads (Reads t) ~ Reads t, Writes (Writes s) ~ Writes s,
@@ -193,8 +194,10 @@ instance Effect State where
       variable into RW effects -}
     type Plus State s t = UnionS s t
 
-    return x = State $ \Empty -> (x, Empty)
+    pure x = State $ \Empty -> (x, Empty)
+    (<*>) = liftE2
 
+instance Effect State where
     (State e) >>= k =
         State $ \st -> let (sR, tR) = split st
                            (a, sW)  = e sR
