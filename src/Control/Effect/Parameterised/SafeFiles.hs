@@ -8,6 +8,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Control.Effect.Parameterised.SafeFiles
          (openFile, hGetChar, hPutChar, hClose, hIsEOF, runSafeFiles

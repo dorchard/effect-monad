@@ -1,6 +1,7 @@
 -- Used to make the types extra clear
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- This module implement parameterised monads due to Bob Atkey
 -- (see 'Parameterised Notions of Computing' JFP 2009)

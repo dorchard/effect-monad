@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Control.Effect.Parameterised.ExtensibleState
           (State(..), Get, Put, Update, get, put, modify
