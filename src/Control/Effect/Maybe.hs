@@ -40,6 +40,7 @@ instance Effect IMaybe where
   -- dynamic (statically undecidable)
   (IDyn (IJust a))  >>= k = IDyn (k a)
   (IDyn (INothing)) >>= k = IDyn INothing
+  IDyn undecided >>= k = IDyn $ undecided >>= k
 
 instance Cond IMaybe where
     type AltInv IMaybe s t = ()
