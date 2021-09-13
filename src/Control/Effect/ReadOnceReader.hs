@@ -1,5 +1,6 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, DataKinds,
-             TypeOperators #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, DataKinds #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Control.Effect.ReadOnceReader (ask,Reader(..),List(..)) where
 
@@ -12,14 +13,18 @@ import Prelude    hiding (Monad(..))
    an effect system as a list of the items that have been read -}
 
 data Reader (r :: [*]) a = R { runReader :: (List r -> a) }
+    deriving (Functor)
 
-instance Effect Reader where
+instance EffectApplicative Reader where
     type Inv Reader s t = Split s t
 
     type Unit Reader = '[]
     type Plus Reader s t = s :++ t
 
-    return x = R $ \Nil -> x
+    pure x = R $ \Nil -> x
+    (<*>) = liftE2
+
+instance Effect Reader where
     (R e) >>= k = R $ \xs -> let (s, t) = split xs
                              in (runReader $ k (e s)) t
 
@@ -32,8 +37,8 @@ instance Cond Reader where
     type Alt Reader s t = s :++ t
 
     ifM True (R x) (R y) = R $ \rs -> let (r, s) = split rs
-                                          _      = y s 
+                                          _      = y s
                                       in x r
     ifM False (R x) (R y) = R $ \rs -> let (r, s) = split rs
-                                           _      = x r 
+                                           _      = x r
                                        in y s

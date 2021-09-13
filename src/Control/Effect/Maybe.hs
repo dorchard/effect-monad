@@ -1,4 +1,6 @@
 {-# LANGUAGE EmptyDataDecls, TypeFamilies, GADTs #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Control.Effect.Maybe where
 
@@ -9,21 +11,23 @@ import Control.Effect.Cond
 
 {-| Provides an indexed version of the |Maybe| monad -}
 
-data F 
-data T 
+data F
+data T
 data U
 
 data IMaybe p a where
-    INothing ::               IMaybe F a 
-    IJust    :: a          -> IMaybe T a 
+    INothing ::               IMaybe F a
+    IJust    :: a          -> IMaybe T a
     IDyn     :: IMaybe s a -> IMaybe U a -- dynamic partiality
+
+deriving instance Functor (IMaybe p)
 
 instance Show a => Show (IMaybe p a) where
     show INothing  = "Nothing"
     show (IJust a) = "Just " ++ show a
     show (IDyn a)  = show a
 
-instance Effect IMaybe where
+instance EffectApplicative IMaybe where
   type Inv IMaybe s t = ()
   type Unit IMaybe = T
 
@@ -31,16 +35,19 @@ instance Effect IMaybe where
   type Plus IMaybe T s = s
   type Plus IMaybe U s = U
 
-  return x = IJust x
+  pure x = IJust x
+  (<*>) = liftE2
 
+instance Effect IMaybe where
   -- static
   (IJust x) >>= k = k x
   INothing  >>= k = INothing
 
   -- dynamic (statically undecidable)
   (IDyn (IJust a))  >>= k = IDyn (k a)
-  (IDyn (INothing)) >>= k = IDyn INothing 
-  
+  (IDyn (INothing)) >>= k = IDyn INothing
+  IDyn undecided >>= k = IDyn $ undecided >>= k
+
 instance Cond IMaybe where
     type AltInv IMaybe s t = ()
 
