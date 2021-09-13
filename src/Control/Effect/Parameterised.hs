@@ -9,7 +9,7 @@
 module Control.Effect.Parameterised ((>>), PMonad(..), fail, ifThenElse) where
 
 -- Bye Monads... as we know them
-import Prelude hiding (Monad(..))
+import Prelude hiding (fail, Monad(..))
 
 -- Hello Parameterised Monads
 class PMonad (pm :: k -> k -> * -> *) where

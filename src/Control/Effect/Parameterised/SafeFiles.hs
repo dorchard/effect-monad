@@ -15,7 +15,7 @@ module Control.Effect.Parameterised.SafeFiles
          , PMonad(..), (>>), ifThenElse, fail) where
 
 -- Bye Monads... as we know them
-import Prelude hiding (Monad(..))
+import Prelude hiding (fail, Monad(..))
 import Control.Effect.Parameterised
 
 -- Import qualified versions of standard code we want to wrap

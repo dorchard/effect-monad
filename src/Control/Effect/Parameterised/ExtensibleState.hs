@@ -6,7 +6,7 @@ module Control.Effect.Parameterised.ExtensibleState
           (State(..), Get, Put, Update, get, put, modify
           , PMonad(..), (>>), ifThenElse, fail) where
 
-import Prelude hiding (Monad(..))
+import Prelude hiding (fail, Monad(..))
 import Control.Effect.Parameterised
 import Control.Effect.Parameterised.State
 import Data.Type.Map
