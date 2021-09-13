@@ -7,7 +7,7 @@ import Prelude hiding (Monad(..))
 import qualified Prelude as P
 
 
-{-| All monads are parametric effect monads with a trivial singleton-monoid index. 
+{-| All monads are parametric effect monads with a trivial singleton-monoid index.
 This wrapper wraps normal monads into the Effect interface using the 'M' contructor.
 -}
 
@@ -27,6 +27,3 @@ instance (P.Monad m) => Effect (Monad m) where
 
     return x = Wrap (P.return x)
     (Wrap x) >>= f = Wrap ((P.>>=) x (unWrap . f))
-    
-
-    
