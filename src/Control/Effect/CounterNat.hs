@@ -7,7 +7,7 @@ import GHC.TypeLits
 import Prelude hiding (Monad(..))
 
 {-| Provides a way to 'count' in the type-level with a monadic interface
-    to sum up the individual counts of subcomputations. Instead 
+    to sum up the individual counts of subcomputations. Instead
     of using our own inductive natural number typ, this uses the 'Nat' kind from 'GHC.TypeLits' -}
 
 {-| The counter has no semantic meaning -}
@@ -20,7 +20,7 @@ instance Effect Counter where
     {-| Compose effects by addition -}
     type Plus Counter n m = n + m
 
-    return a = Counter a   
+    return a = Counter a
     (Counter a) >>= k = Counter . forget $ k a
 
 {-| A 'tick' provides a way to increment the counter -}
