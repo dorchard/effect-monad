@@ -34,4 +34,3 @@ instance Effect Counter where
 tick :: a -> Counter (S Z) a
 tick x = Counter x
 
-    

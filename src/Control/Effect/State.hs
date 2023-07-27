@@ -29,6 +29,25 @@ data Eff = R | W | RW
 {-| Provides a wrapper for effect actions -}
 data Action (s :: Eff) = Eff
 
+-- Graded monad instance
+instance Effect State where
+    type Inv State s t = StateSetUsefulProperties s t
+
+    {-| Pure state effect is the empty state -}
+    type Unit State = '[]
+    {-| Combine state effects via specialised union (which combines R and W effects on the same
+      variable into RW effects -}
+    type Plus State s t = UnionS s t
+
+    return x = State $ \Empty -> (x, Empty)
+
+    (State e) >>= k =
+        State $ \st -> let (sR, tR) = split st
+                           (a, sW)  = e sR
+                           (b, tW) = (runState $ k a) (sW `intersectR` tR)
+                       in  (b, sW `union` tW)
+
+
 instance Show (Action R) where
     show _ = "R"
 instance Show (Action W) where
@@ -44,6 +63,9 @@ data Var (k :: Symbol) where Var :: Var k
                              X   :: Var "x"
                              Y   :: Var "y"
                              Z   :: Var "z"
+
+
+
 
 
 instance (Show (Var k), Show v) => Show (k :-> v) where
@@ -177,34 +199,11 @@ type StateSetProperties (f :: [*]) = (IntersectR f ('[] :: [*]), IntersectR ('[]
                              UnionS f f ~ f, Split f f f,
                              Unionable f ('[] :: [*]), Unionable ('[] :: [*]) f)
 
--- Indexed monad instance
-instance Effect State where
-    type Inv State s t = (IsSet s, IsSet (Reads s), IsSet (Writes s),
+
+type StateSetUsefulProperties s t = (IsSet s, IsSet (Reads s), IsSet (Writes s),
                           IsSet t, IsSet (Reads t), IsSet (Writes t),
                           Reads (Reads t) ~ Reads t, Writes (Writes s) ~ Writes s,
                             Split (Reads s) (Reads t) (Reads (UnionS s t)),
                             Unionable (Writes s) (Writes t),
                             IntersectR (Writes s) (Reads t),
                             Writes (UnionS s t) ~ UnionS (Writes s) (Writes t))
-
-    {-| Pure state effect is the empty state -}
-    type Unit State = '[]
-    {-| Combine state effects via specialised union (which combines R and W effects on the same
-      variable into RW effects -}
-    type Plus State s t = UnionS s t
-
-    return x = State $ \Empty -> (x, Empty)
-
-    (State e) >>= k =
-        State $ \st -> let (sR, tR) = split st
-                           (a, sW)  = e sR
-                           (b, tW) = (runState $ k a) (sW `intersectR` tR)
-                       in  (b, sW `union` tW)
-
-
-{-
-instance (Split s t (Union s t), Sub s t) => Subeffect State s t where
-    sub (State e) = IxR $ \st -> let (s, t) = split st
-                                           _ = ReflP p t
-                                 in e s
--}
