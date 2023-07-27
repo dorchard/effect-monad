@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,
              UndecidableInstances, RebindableSyntax,  DataKinds,
              TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds,
-             IncoherentInstances, GADTs
+             IncoherentInstances, GADTs, InstanceSigs
              #-}
 
 module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
@@ -14,20 +14,16 @@ module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
 import Control.Effect
 import Data.Type.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
 import qualified Data.Type.Set as Set
---import Data.Type.Map (Mapping(..), Var(..))
 
 import Prelude hiding (Monad(..),reads)
 import GHC.TypeLits
 
-{-| Provides an effect-parameterised version of the state monad, which gives an
+{-| Provides an graded version of the state monad, which gives an
    effect system for stateful computations with annotations that are sets of
    variable-type-action triples. -}
 
-
-{-| Distinguish reads, writes, and read-writes -}
-data Eff = R | W | RW
-{-| Provides a wrapper for effect actions -}
-data Action (s :: Eff) = Eff
+{-| Graded state monad -}
+data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }
 
 -- Graded monad instance
 instance Effect State where
@@ -39,13 +35,22 @@ instance Effect State where
       variable into RW effects -}
     type Plus State s t = UnionS s t
 
+    return :: a -> State '[] a
     return x = State $ \Empty -> (x, Empty)
 
+    (>>=) :: (StateSetUsefulProperties f g) => State f a -> (a -> State g b) -> State (UnionS f g) b
     (State e) >>= k =
         State $ \st -> let (sR, tR) = split st
                            (a, sW)  = e sR
                            (b, tW) = (runState $ k a) (sW `intersectR` tR)
                        in  (b, sW `union` tW)
+
+---------------------------------------------
+
+{-| Distinguish reads, writes, and read-writes -}
+data Eff = R | W | RW
+{-| Provides a wrapper for effect actions -}
+data Action (s :: Eff) = Eff
 
 
 instance Show (Action R) where
@@ -165,9 +170,6 @@ type IntersectR s t = (Sortable (s :++ t), Update (Sort (s :++ t)) t)
     any corresponding write value -}
 intersectR :: (Reads t ~ t, Writes s ~ s, IsSet s, IsSet t, IntersectR s t) => Set s -> Set t -> Set t
 intersectR s t = update (quicksort (append s t))
-
-{-| Parametric effect state monad -}
-data State s a = State { runState :: Set (Reads s) -> (a, Set (Writes s)) }
 
 {-| Calculate just the reader effects -}
 type family Reads t where
