@@ -1,6 +1,6 @@
-{-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators #-}
+{-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators, DataKinds #-}
 
-module Control.Effect.Counter(Z, S, Counter, tick, (:+)) where
+module Control.Effect.Counter(N, Counter, tick, (:+)) where
 
 import Control.Effect
 import Prelude hiding (Monad(..))
@@ -9,16 +9,15 @@ import Prelude hiding (Monad(..))
     to sum up the individual counts of subcomputations -}
 
 {-| Define type constructors for natural numbers -}
-data Z
-data S n
+data N = Z | S N
 
 {-| The counter has no semantic meaning -}
-data Counter n a = Counter { forget :: a }
+data Counter (n :: N) a = Counter { forget :: a }
 
 {-| Type-level addition -}
-type family n :+ m 
-type instance n :+ Z     = n
-type instance n :+ (S m) = S (n :+ m)
+type family (n :: N) :+ (m :: N) where
+            n :+ Z     = n
+            n :+ (S m) = S (n :+ m)
 
 instance Effect Counter where
     type Inv Counter n m = ()
