@@ -1,5 +1,5 @@
 name:                   effect-monad
-version:                0.8.0.0
+version:                0.8.0.1
 synopsis:               Embeds effect systems and program logics into Haskell using graded monads and parameterised monads
 description:
    Provides the graded monad structure to Haskell via Control.Effect
@@ -22,13 +22,13 @@ description:
 license:                BSD3
 license-file:           LICENSE
 category:               Control, Monads
-copyright:              2013-18 University of Kent
+copyright:              2013-23 University of Kent
 author:                 Dominic Orchard
 maintainer:             Dominic Orchard
 stability:              experimental
 build-type:             Simple
 cabal-version:          >= 1.6
-tested-with:            GHC == 7.10.3, GHC == 8.0.1, GHC == 8.2.2
+tested-with:            GHC == 9.0.1
 
 extra-source-files:     examples/*.hs
 
@@ -65,4 +65,4 @@ library
                         Control.Effect.Parameterised.State
 
   build-depends:        base < 5,
-                        type-level-sets >= 0.8.7.0
+                        type-level-sets >= 0.8.9.1

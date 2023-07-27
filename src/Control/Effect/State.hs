@@ -171,11 +171,11 @@ put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 
 {-| Captures what it means to be a set of state effects -}
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
-type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
-                             UnionS f '[] ~ f, Split f '[] f,
-                             UnionS '[] f ~ f, Split '[] f f,
+type StateSetProperties (f :: [*]) = (IntersectR f ('[] :: [*]), IntersectR ('[] :: [*]) f,
+                             UnionS f ('[] :: [*]) ~ f, Split f ('[] :: [*]) f,
+                             UnionS ('[] :: [*]) f ~ f, Split ('[] :: [*]) f f,
                              UnionS f f ~ f, Split f f f,
-                             Unionable f '[], Unionable '[] f)
+                             Unionable f ('[] :: [*]), Unionable ('[] :: [*]) f)
 
 -- Indexed monad instance
 instance Effect State where
