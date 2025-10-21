@@ -25,7 +25,7 @@ append Nil         ys = ys
 append (Cons x xs) ys = Cons x (append xs ys)
 
 instance Effect Vector where
-    -- Effect monoid is (N, *, 1)
+    -- Effect monoid is (N, Type, 1)
     type Inv Vector s t = ()
 
     type Unit Vector = S Z

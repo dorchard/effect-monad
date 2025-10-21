@@ -7,11 +7,12 @@ import Control.Effect
 import Control.Effect.Cond
 import Control.Effect.Helpers.List
 import Prelude    hiding (Monad(..))
+import Data.Kind (Type)
 
 {-| Provides a weak reader monad, which can only read an item once. Provides
    an effect system as a list of the items that have been read -}
 
-data Reader (r :: [*]) a = R { runReader :: (List r -> a) }
+data Reader (r :: [Type]) a = R { runReader :: (List r -> a) }
 
 instance Effect Reader where
     type Inv Reader s t = Split s t

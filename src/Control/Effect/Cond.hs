@@ -2,12 +2,13 @@
 
 module Control.Effect.Cond where
 
-import GHC.Exts ( Constraint )
+import GHC.Exts (Constraint)
+import Data.Kind (Type)
 
 {-| Provides a conditional using an 'alternation' operation, as opposed to using
    'Subeffect' -}
 
-class Cond (m :: k -> * -> *) where
+class Cond (m :: k -> Type -> Type) where
     type AltInv m (s :: k) (t :: k) :: Constraint
     type AltInv m s t = ()
 

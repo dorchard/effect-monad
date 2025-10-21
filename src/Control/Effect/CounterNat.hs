@@ -1,9 +1,11 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, DataKinds #-}
+{-# LANGUAGE TypeFamilies, 
+             TypeOperators, 
+             DataKinds #-}
 
 module Control.Effect.CounterNat where
 
-import Control.Effect
-import GHC.TypeLits
+import Control.Effect (Effect(Plus, (>>=), return, Inv, Unit))
+import GHC.TypeLits (type (+), Nat)
 import Prelude hiding (Monad(..))
 
 {-| Provides a way to 'count' in the type-level with a monadic interface

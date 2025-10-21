@@ -4,12 +4,13 @@
 module Control.Effect.Helpers.List where
 
 import Data.Proxy 
+import Data.Kind (Type)
 
-data List (l::[*]) where
+data List (l::[Type]) where
     Nil   :: List '[]
     Cons  :: x -> List xs -> List (x ': xs)
 
-type family (:++) (s :: [*]) (t :: [*]) :: [*] where
+type family (:++) (s :: [Type]) (t :: [Type]) :: [Type] where
     '[] :++ ys       = ys
     (x ': xs) :++ ys = x ': (xs :++ ys)
 
@@ -17,7 +18,7 @@ append :: List s -> List t -> List (s :++ t)
 append Nil xs = xs
 append (Cons x xs) ys = Cons x (append xs ys)
 
-class Split (s :: [*]) (t :: [*]) where
+class Split (s :: [Type]) (t :: [Type]) where
     split :: List (s :++ t) -> (List s, List t)
 
 instance Split '[] xs where

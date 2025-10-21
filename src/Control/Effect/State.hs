@@ -1,23 +1,55 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances,
-             UndecidableInstances, RebindableSyntax,  DataKinds,
-             TypeOperators, PolyKinds, FlexibleContexts, ConstraintKinds,
-             IncoherentInstances, GADTs
+{-# LANGUAGE TypeFamilies, 
+             MultiParamTypeClasses, 
+             FlexibleInstances,
+             UndecidableInstances, 
+             RebindableSyntax,  
+             DataKinds,
+             TypeOperators, 
+             PolyKinds, 
+             FlexibleContexts, 
+             ConstraintKinds,
+             IncoherentInstances, 
+             GADTs, 
+             TypeApplications
              #-}
 
-module Control.Effect.State (Set(..), get, put, State(..), (:->)(..), (:!)(..),
-                                  Eff(..), Action(..), Var(..), union, UnionS,
-                                     Reads(..), Writes(..), Unionable, Sortable, SetLike,
-                                      StateSet,
-                                          --- may not want to export these
-                                          IntersectR, Update, Sort, Split) where
+module Control.Effect.State 
+    (Set(..), 
+     get, 
+     put, 
+     State(..), 
+     (:->)(..), 
+     (:!)(..),
+     Eff(..), 
+     Action(..), 
+     Var(..), 
+     union, 
+     UnionS,
+     Reads(..), 
+     Writes(..), 
+     Unionable, 
+     Sortable, 
+     SetLike,
+     StateSet,
+     --- may not want to export these
+     IntersectR, Update, Sort, Split) where
 
-import Control.Effect
-import Data.Type.Set hiding (Unionable, union, SetLike, Nub, Nubable(..))
+import Control.Effect (Effect(Plus, (>>=), return, Inv, Unit))
+import Data.Type.Set
+    (append,
+     type (:++),
+     Cmp,
+     IsSet,
+     Set(..),
+     Sort,
+     Sortable(..),
+     Split(..),
+     Union)
 import qualified Data.Type.Set as Set
---import Data.Type.Map (Mapping(..), Var(..))
 
 import Prelude hiding (Monad(..),reads)
-import GHC.TypeLits
+import GHC.TypeLits (Symbol, CmpSymbol)
+import Data.Kind (Type)
 
 {-| Provides an effect-parameterised version of the state monad, which gives an
    effect system for stateful computations with annotations that are sets of
@@ -37,7 +69,7 @@ instance Show (Action RW) where
     show _ = "RW"
 
 infixl 2 :->
-data (k :: Symbol) :-> (v :: *) = (Var k) :-> v
+data (k :: Symbol) :-> (v :: Type) = (Var k) :-> v
 
 data Var (k :: Symbol) where Var :: Var k
                              {- Some special defaults for some common names -}
@@ -172,8 +204,8 @@ put _ a = State $ \Empty -> ((), Ext (Var :-> a :! Eff) Empty)
 {-| Captures what it means to be a set of state effects -}
 type StateSet f = (StateSetProperties f, StateSetProperties (Reads f), StateSetProperties (Writes f))
 type StateSetProperties f = (IntersectR f '[], IntersectR '[] f,
-                             UnionS f '[] ~ f, Split f '[] f,
-                             UnionS '[] f ~ f, Split '[] f f,
+                             UnionS f '[] ~ f, Split f ('[] @Type) f,
+                             UnionS '[] f ~ f, Split ('[] @Type) f f,
                              UnionS f f ~ f, Split f f f,
                              Unionable f '[], Unionable '[] f)
 

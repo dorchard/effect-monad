@@ -1,20 +1,21 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, DataKinds #-}
+{-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, DataKinds, TypeOperators #-}
 
 module Control.Effect.ParameterisedAsGraded where
 
 import Control.Effect
+import Data.Kind (Type)
 
 {-| Implements Bob Atkey's 'parametric monads',
     and also the Control.Monad.Indexed package, by emulating
     indexing by morphisms -}
 
 {-| Data type of morphisms -}
-newtype T (i :: Morph * *) a = T a
+newtype T (i :: Morph Type Type) a = T a
 
 {-| Data type denoting either a morphisms with source and target types, or identity -}
 data Morph a b = M a b | Id
 
-instance Effect (T :: ((Morph * *) -> * -> *)) where
+instance Effect (T :: ((Morph Type Type) -> Type -> Type)) where
     type Unit T = Id
     type Plus T (M a b) (M c d) = M a d
     type Plus T Id (M a b) = M a b

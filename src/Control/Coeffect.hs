@@ -4,6 +4,7 @@
 module Control.Coeffect where 
 
 import GHC.Exts ( Constraint )
+import Data.Kind (Type)
 
 {- Coeffect parameterised comonad
 
@@ -15,7 +16,7 @@ by Petricek, Orchard, Mycroft: http://www.cl.cam.ac.uk/~dao29/publ/coeffects-ica
 
 {-| Specifies "parametric coeffect comonads" which are essentially comonads but
      annotated by a type-level monoid formed by 'Plus' and 'Unit' -}
-class Coeffect (c :: k -> * -> *) where
+class Coeffect (c :: k -> Type -> Type) where
     type Inv c (s :: k) (t :: k) :: Constraint
     type Inv c s t = ()
 
@@ -32,11 +33,11 @@ class Coeffect (c :: k -> * -> *) where
     extend :: Inv c s t => (c t a -> b) -> c (Plus c s t) a -> c s b
 
 {-| Zips two coeffecting computations together -}
-class CoeffectZip (c :: k -> * -> *) where
+class CoeffectZip (c :: k -> Type -> Type) where
     type Meet c (s :: k) (t :: k) :: k
     type CzipInv c (s :: k) (t :: k) :: Constraint
     czip :: CzipInv c s t => c s a -> c t b -> c (Meet c s t) (a, b)
 
 {-| Specifies sub-coeffecting behaviour -}
-class Subcoeffect (c :: k -> * -> *) s t where
+class Subcoeffect (c :: k -> Type -> Type) s t where
     subco :: c s a -> c t a

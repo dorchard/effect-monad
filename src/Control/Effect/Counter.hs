@@ -1,9 +1,10 @@
 {-# LANGUAGE TypeFamilies, EmptyDataDecls, TypeOperators #-}
 
-module Control.Effect.Counter(Z, S, Counter, tick, (:+)) where
+module Control.Effect.Counter () where
 
-import Control.Effect
+import Control.Effect (Effect(..))
 import Prelude hiding (Monad(..))
+import Data.Kind (Type)
 
 {-| Provides a way to 'count' in the type-level with a monadic interface
     to sum up the individual counts of subcomputations -}
@@ -13,7 +14,7 @@ data Z
 data S n
 
 {-| The counter has no semantic meaning -}
-data Counter n a = Counter { forget :: a }
+data Counter (n :: Type) a = Counter { forget :: a }
 
 {-| Type-level addition -}
 type family n :+ m 
@@ -34,5 +35,3 @@ instance Effect Counter where
 {-| A 'tick' provides a way to increment the counter -}
 tick :: a -> Counter (S Z) a
 tick x = Counter x
-
-    

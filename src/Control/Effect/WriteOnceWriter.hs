@@ -6,11 +6,12 @@ module Control.Effect.WriteOnceWriter (put, WriteOnce(..)) where
 import Control.Effect
 import Control.Effect.Helpers.List
 import Prelude hiding (Monad(..))
+import Data.Kind (Type)
 
 {-| Provides a kind of writer monad, which can only write an item once 
    (no accumulation), an effect system as a list of the items that have been written -}
 
-data WriteOnce (w :: [*]) a = W { runWriteOnce :: (a, List w) }
+data WriteOnce (w :: [Type]) a = W { runWriteOnce :: (a, List w) }
 
 instance Effect WriteOnce where
     type Inv WriteOnce s t = ()
