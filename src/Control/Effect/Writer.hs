@@ -1,21 +1,51 @@
-{-# LANGUAGE GADTs, DataKinds, KindSignatures, TypeOperators, TypeFamilies,
-             MultiParamTypeClasses, FlexibleInstances, UndecidableInstances,
-             ScopedTypeVariables, PolyKinds, FlexibleContexts #-}
+{-# LANGUAGE GADTs, 
+             DataKinds, 
+             KindSignatures, 
+             TypeOperators, 
+             TypeFamilies,
+             MultiParamTypeClasses, 
+             FlexibleInstances, 
+             UndecidableInstances,
+             ScopedTypeVariables, 
+             PolyKinds, 
+             FlexibleContexts #-}
 
-module Control.Effect.Writer(Writer(..), Symbol, put, Mapping(..),
-                             IsMap, Map(..), union, Var(..),
-                             Union, Unionable) where
+module Control.Effect.Writer
+    (Writer(..), 
+     Symbol, 
+     put, 
+     Mapping(..),
+     IsMap, 
+     Map(..), 
+     union, 
+     Var(..),
+     Union, 
+     Unionable) where
 
 import Control.Effect
+    (Subeffect(..), 
+     Effect(Plus, (>>=), return, Inv, Unit)) 
+
 import Data.Type.Map
-import Data.Monoid
-import GHC.TypeLits
+    (union,
+     Combine,
+     IsMap,
+     Map(..),
+     Mapping(..),
+     Nubable(..),
+     Union,
+     Unionable,
+     Var(..))
+     
+import Data.Monoid (Monoid(mempty, mappend))
+import GHC.TypeLits (Symbol )
 import Prelude hiding (Monad(..))
+import Data.Kind (Type)
 
 {-| Provides an effect-parameterised version of the writer monad. Effects
    are maps of variable-type pairs, providing an effect system for writer effects. -}
 
-data Writer (w :: [Mapping Symbol *]) a = Writer { runWriter :: (a, Map w) }
+data Writer (w :: [Mapping Symbol Type]) a = Writer { runWriter :: (a, Map w) }
 
 instance Effect Writer where
     type Inv Writer s t = (IsMap s, IsMap t, Unionable s t)

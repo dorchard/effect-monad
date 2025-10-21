@@ -11,9 +11,10 @@ module Control.Effect.Parameterised ((>>), PMonad(..), fail, ifThenElse) where
 
 -- Bye Monads... as we know them
 import Prelude hiding (fail, Monad(..))
+import Data.Kind (Type)
 
 -- Hello Parameterised Monads
-class PMonad (pm :: k -> k -> * -> *) where
+class PMonad (pm :: k -> k -> Type -> Type) where
   -- Lift pure values into effect-invariant computations
   return :: a -> pm inv inv a
 

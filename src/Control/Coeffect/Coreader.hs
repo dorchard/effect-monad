@@ -6,10 +6,11 @@ module Control.Coeffect.Coreader where
 import Control.Coeffect
 import Data.Type.Map
 import GHC.TypeLits
+import Data.Kind
 
 {-| Provides 'reader monad'-like behaviour but as a comonad, using an indexed
     version of the product comonad -}
-data IxCoreader (s :: [Mapping Symbol *]) a = IxR { runCoreader :: (a, Map s) }
+data IxCoreader (s :: [Mapping Symbol Type]) a = IxR { runCoreader :: (a, Map s) }
 
 instance Coeffect IxCoreader where
     type Inv IxCoreader s t = (Unionable s t, Split s t (Union s t))

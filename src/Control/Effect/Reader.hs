@@ -1,21 +1,49 @@
-{-# LANGUAGE TypeFamilies, FlexibleInstances, FlexibleContexts,
-             MultiParamTypeClasses, UndecidableInstances, RebindableSyntax,
-             DataKinds, TypeOperators, PolyKinds, ConstraintKinds,
+{-# LANGUAGE TypeFamilies, 
+             FlexibleInstances, 
+             FlexibleContexts,
+             MultiParamTypeClasses, 
+             UndecidableInstances, 
+             RebindableSyntax,
+             DataKinds, 
+             TypeOperators, 
+             PolyKinds, 
+             ConstraintKinds,
              KindSignatures #-}
 
-module Control.Effect.Reader (Reader(..), ask, merge, Mapping(..),
-                              Var(..), Submap, Map(..)) where
+module Control.Effect.Reader 
+    (Reader(..), 
+     ask, 
+     merge, 
+     Mapping(..),
+     Var(..), 
+     Submap, 
+     Map(..)) where
 
 import Control.Effect
+    (Subeffect(..), 
+     Effect(Plus, (>>=), return, Inv, Unit))
+
 import Data.Type.Map
+    (union,
+     Combine,
+     IsMap,
+     Map(..),
+     Mapping(..),
+     Split(..),
+     Submap(..),
+     Union,
+     Unionable,
+     Var(..))
+
 import Prelude hiding (Monad(..))
-import GHC.TypeLits
-import GHC.Exts ( Constraint )
+import GHC.TypeLits (Symbol)
+import GHC.Exts (Constraint)
+import Data.Kind (Type)
 
 {-| Provides a effect-parameterised version of the class reader monad. Effects
    are sets of variable-type pairs, providing an effect system for reader effects. -}
 
-newtype Reader (s :: [Mapping Symbol *]) a = IxR { runReader :: Map s -> a }
+newtype Reader (s :: [Mapping Symbol Type]) a = IxR { runReader :: Map s -> a }
 
 instance Effect Reader where
     type Inv Reader f g = (IsMap f, IsMap g, Split f g (Union f g))

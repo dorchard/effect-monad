@@ -1,13 +1,14 @@
 {-# LANGUAGE KindSignatures, TypeFamilies, ConstraintKinds, PolyKinds, MultiParamTypeClasses #-}
 
-module Control.Effect where 
+module Control.Effect (Effect(..), Subeffect(..)) where 
 
 import Prelude hiding (Monad(..))
 import GHC.Exts ( Constraint )    
+import Data.Kind (Type)
 
 {-| Specifies "parametric effect monads" which are essentially monads but
      annotated by a type-level monoid formed by 'Plus' and 'Unit' -}
-class Effect (m :: k -> * -> *) where
+class Effect (m :: k -> Type -> Type) where
 
    {-| Effect of a trivially effectful computation |-}
    type Unit m :: k
@@ -33,6 +34,6 @@ class Effect (m :: k -> * -> *) where
 fail = undefined
 
 {-| Specifies subeffecting behaviour -}
-class Subeffect (m :: k -> * -> *) f g where
+class Subeffect (m :: k -> Type -> Type) f g where
     sub :: m f a -> m g a
 
